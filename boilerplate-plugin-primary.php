@@ -65,12 +65,34 @@ add_action('admin_enqueue_scripts', 'QCWC_includes_admin_resources');
 // $GLOBALS['api_key']  = '{KEY}';
 
 
+add_action('init', 'start_session', 1);
+function start_session()
+{
+    if (!session_id()) {
+        session_start();
+    }
+}
+
+function get_quick_c_user_token_from_session()
+{
+    return isset($_SESSION['quick-c-user-token']) ? $_SESSION['quick-c-user-token'] : false;
+}
+
+function remove_auth_token_from_session()
+{
+    if (isset($_SESSION['quick-c-user-token'])) {
+        unset($_SESSION['quick-c-user-token']);
+    }
+}
+
+
+
 // Check is User Logged in and is Checkout so script pass token and user email
 function QCWC_custom_checkout_popup()
 {
     if (is_checkout() && is_user_logged_in()) {
         $user_id = get_current_user_id();
-        $user_token = get_user_meta($user_id, 'quick-c-user-token', true);
+        $user_token = get_user_meta($user_id, 'quick-c-user-api-key', true);
 
         wp_localize_script('QCWC-script', 'popupData', array(
             'isTokenEmpty' => empty($user_token),
@@ -118,20 +140,76 @@ add_action('wp_footer', 'QCWC_custom_popup_html');
 
 // Authentication Ajax
 
-add_action('wp_ajax_authenticate_user', 'handle_authentication');
-add_action('wp_ajax_nopriv_authenticate_user', 'handle_authentication');
+add_action('wp_ajax_authenticate_user', 'QCWC_handle_authentication');
+add_action('wp_ajax_nopriv_authenticate_user', 'QCWC_handle_authentication');
 
-function handle_authentication()
+function QCWC_handle_authentication()
 {
     $email = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443 ? "https://" : "http://";
+    $domain = $protocol . $_SERVER['HTTP_HOST'];
+    $platForm = "Wordpress";
+    $verifyMethod = "JWT";
 
-    $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/auth/login/');
-    $response = $api_handler->authenticate($email);
+    $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/platform/login-by-portal/');
+    $response = $api_handler->authenticate($email, $domain, $platForm, $verifyMethod);
 
     if ($response) {
+        $_SESSION['quick-c-user-token'] = $response['data']['token'];
         wp_send_json_success($response);
     } else {
         wp_send_json_error('Authentication failed');
+    }
+}
+
+
+
+register_activation_hook(__FILE__, 'QCWC_woocommerce_plugin_activate');
+
+function QCWC_woocommerce_plugin_activate()
+{
+
+    $name = "Wordpress";
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443 ? "https://" : "http://";
+    $domain = $protocol . $_SERVER['HTTP_HOST'];
+    $description = "An example wordpress platform for demonstration.";
+    $ip_address = $_SERVER['REMOTE_ADDR'];
+
+
+    $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/platform/register/');
+    $response = $api_handler->registerPlatForm($name, $domain, $description, $ip_address);
+
+    var_dump($response);
+}
+
+
+add_action('wp_ajax_check_api_key', 'QCWC_check_api_key');
+add_action('wp_ajax_nopriv_check_api_key', 'QCWC_check_api_key');
+function QCWC_check_api_key()
+{
+    $user_token = get_quick_c_user_token_from_session();
+
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443 ? "https://" : "http://";
+    $domain = $protocol . $_SERVER['HTTP_HOST'];
+
+    $platForm = "Wordpress";
+    $email = "mhasank999@gmail.com";
+
+    $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/platform/api-key/');
+
+    $response = $api_handler->checkApiKey($user_token, $domain, $platForm, $email);
+    // $user_id = get_current_user_id();
+    // delete_user_meta($user_id, 'quick-c-user-api-key');
+    if ($response) {
+        if (isset($response['status_code']) && $response['status_code'] == 200) {
+            $current_user_id = get_current_user_id();
+            $api_key = $response['data']['api_key'];
+            update_user_meta($current_user_id, 'quick-c-user-api-key', $api_key);
+        }
+
+        wp_send_json($response);
+    } else {
+        wp_send_json_error('API request failed');
     }
 }
 
