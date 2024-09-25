@@ -119,6 +119,14 @@ function QCWC_custom_popup_html()
                     </div>
                     <button id="authenticateButton" type="button"><span class="btn-text">Authenticate</span> <span class="btn-loader"></span> </button>
                 </div>
+                <div class="verification-content" style="display: none;">
+                    <h2>Verification Required</h2>
+                    <p>Please select the verification option to verify</p>
+                    <div class="btns">
+                        <button id="verifyViaDeviceBtn" type="button"><span class="btn-text">Verify Via Device</span> <span class="btn-loader"></span></button>
+                        <button id="verifyViaOtp" type="button"><span class="btn-text">Verify Via OTP</span> <span class="btn-loader"></span></button>
+                    </div>
+                </div>
                 <div class="otp-content" style="display: none;">
                     <h2>Verify OTP</h2>
                     <p>Enter the code from the email we sent you</p>
@@ -126,7 +134,7 @@ function QCWC_custom_popup_html()
                         <div class="QCWC_form-group">
                             <input type="number" id="userOtp" maxlength="5" placeholder="00000" />
                         </div>
-                        <button id="verifyOtpButton" type="button">Submit</button>
+                        <button id="verifyOtpButton" type="button"><span class="btn-text">Submit</span> <span class="btn-loader"></span></button>
                     </div>
                 </div>
             </div>
@@ -149,7 +157,7 @@ function QCWC_handle_authentication()
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443 ? "https://" : "http://";
     $domain = $protocol . $_SERVER['HTTP_HOST'];
     $platForm = "Wordpress";
-    $verifyMethod = "JWT";
+    $verifyMethod = isset($_POST['verifyMethod']) ? sanitize_text_field($_POST['verifyMethod']) : 'JWT';
 
     $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/platform/login-by-portal/');
     $response = $api_handler->authenticate($email, $domain, $platForm, $verifyMethod);
@@ -159,6 +167,31 @@ function QCWC_handle_authentication()
         wp_send_json_success($response);
     } else {
         wp_send_json_error('Authentication failed');
+    }
+}
+
+add_action('wp_ajax_authenticate_verify_user', 'QCWC_handle_verify_authentication');
+add_action('wp_ajax_nopriv_authenticate_verify_user', 'QCWC_handle_verify_authentication');
+
+function QCWC_handle_verify_authentication()
+{
+    $email = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
+    $verifyMethod = isset($_POST['verifyMethod']) ? sanitize_text_field($_POST['verifyMethod']) : 'JWT';
+    $otp = isset($_POST['otp']) ? sanitize_text_field($_POST['otp']) : '';
+    $user_token = get_quick_c_user_token_from_session();
+
+    $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/platform/verify-portal-login/');
+    $response = $api_handler->verify_authenticate($email, $verifyMethod, $otp, $user_token);
+
+    if ($response) {
+        // if (isset($response['status_code']) && $response['status_code'] == 200) {
+        //     $current_user_id = get_current_user_id();
+        //     $api_key = $response['data']['api_key'];
+        //     update_user_meta($current_user_id, 'quick-c-user-api-key', $api_key);
+        // }
+        wp_send_json_success($response);
+    } else {
+        wp_send_json_error('Verification failed');
     }
 }
 
@@ -200,6 +233,7 @@ function QCWC_check_api_key()
     $response = $api_handler->checkApiKey($user_token, $domain, $platForm, $email);
     // $user_id = get_current_user_id();
     // delete_user_meta($user_id, 'quick-c-user-api-key');
+    // remove_auth_token_from_session();
     if ($response) {
         if (isset($response['status_code']) && $response['status_code'] == 200) {
             $current_user_id = get_current_user_id();
@@ -211,6 +245,30 @@ function QCWC_check_api_key()
     } else {
         wp_send_json_error('API request failed');
     }
+}
+
+
+
+add_action('wp_ajax_fetch_user_details', 'QCWC_fetch_user_details');
+add_action('wp_ajax_nopriv_fetch_user_details', 'QCWC_fetch_user_details');
+
+function QCWC_fetch_user_details()
+{
+
+    $user_token = get_quick_c_user_token_from_session();
+    $email = $_POST['email'];
+
+    $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/user/details/');
+    $response = $api_handler->getUserDetail($user_token, $email);
+
+    if ($response) {
+
+        wp_send_json($response);
+
+    } else {
+        wp_send_json_error('API request failed');
+    }
+
 }
 
 

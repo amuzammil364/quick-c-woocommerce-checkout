@@ -42,6 +42,40 @@ class API_Handler
         return $response_data['success'] ? $response_data : false;
     }
 
+    public function verify_authenticate($email, $verifyMethod, $otp, $token)
+    {
+
+        $data = array(
+            "email" => $email,
+            "verify_method" => $verifyMethod,
+            "value" => $otp,
+        );
+
+        $json_data = json_encode($data);
+
+        $ch = curl_init();
+
+        curl_setopt($ch, CURLOPT_URL, $this->api_url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $json_data);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $token
+        ]);
+
+        $response = curl_exec($ch);
+
+        if (curl_errno($ch)) {
+            return false;
+        }
+
+        curl_close($ch);
+        $response_data = json_decode($response, true);
+
+        return $response_data;
+    }
+
     public function registerPlatForm($name, $domain, $description, $ip)
     {
         $data = array(
@@ -109,10 +143,33 @@ class API_Handler
 
     }
 
-    public function getUserDetail()
+    public function getUserDetail($token, $email)
     {
 
+        $url = sprintf(
+            '%s?email=%s',
+            $this->api_url,
+            urlencode($email),
+        );
 
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Authorization: ' . 'Bearer ' . $token,
+        ]);
+
+        $response = curl_exec($ch);
+
+        if (curl_errno($ch)) {
+            return false;
+        }
+
+        curl_close($ch);
+
+        $response_data = json_decode($response, true);
+        return $response_data;
 
     }
 }

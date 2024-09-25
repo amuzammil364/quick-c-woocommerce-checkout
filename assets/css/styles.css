@@ -69,6 +69,19 @@
   color: #6f7380;
 }
 
+.QCWC_loginModal .QCWC_modal-content .verification-content .btns {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 15px;
+}
+
+.QCWC_loginModal .QCWC_modal-content .verification-content .btns button {
+  width: 50%;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
 .QCWC_loginModal .QCWC_modal-content button {
   background-color: #252525;
   color: #fff;
@@ -83,8 +96,8 @@
 
 .QCWC_loginModal .QCWC_modal-content button .btn-loader {
   display: inline-block;
-  width: 20px;
-  height: 20px;
+  width: 23px;
+  height: 23px;
   border: 2px solid #252525;
   border-top-color: #fff;
   border-right-color: #fff;
