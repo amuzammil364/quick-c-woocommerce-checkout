@@ -163,7 +163,7 @@ function QCWC_handle_authentication()
     $response = $api_handler->authenticate($email, $domain, $platForm, $verifyMethod);
 
     if ($response) {
-        $_SESSION['quick-c-user-token'] = $response['data']['token'];
+        $_SESSION['quick-c-user-token'] = $response['data']['data']['token'];
         wp_send_json_success($response);
     } else {
         wp_send_json_error('Authentication failed');
@@ -175,21 +175,21 @@ add_action('wp_ajax_nopriv_authenticate_verify_user', 'QCWC_handle_verify_authen
 
 function QCWC_handle_verify_authentication()
 {
-    $email = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
+    $user = isset($_POST['user']) ? sanitize_email($_POST['user']) : '';
     $verifyMethod = isset($_POST['verifyMethod']) ? sanitize_text_field($_POST['verifyMethod']) : 'JWT';
-    $otp = isset($_POST['otp']) ? sanitize_text_field($_POST['otp']) : '';
+    $otp = isset($_POST['value']) ? sanitize_text_field($_POST['value']) : '';
     $user_token = get_quick_c_user_token_from_session();
 
     $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/platform/verify-portal-login/');
-    $response = $api_handler->verify_authenticate($email, $verifyMethod, $otp, $user_token);
+    $response = $api_handler->verify_authenticate($user, $verifyMethod, $otp, $user_token);
 
     if ($response) {
-        // if (isset($response['status_code']) && $response['status_code'] == 200) {
-        //     $current_user_id = get_current_user_id();
-        //     $api_key = $response['data']['api_key'];
-        //     update_user_meta($current_user_id, 'quick-c-user-api-key', $api_key);
-        // }
-        wp_send_json_success($response);
+        if (isset($response['status_code']) && $response['status_code'] == 200) {
+            $current_user_id = get_current_user_id();
+            $api_key = $response['data']['api_key'];
+            update_user_meta($current_user_id, 'quick-c-user-api-key', $api_key);
+        }
+        wp_send_json($response);
     } else {
         wp_send_json_error('Verification failed');
     }

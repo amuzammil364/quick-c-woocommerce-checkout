@@ -42,11 +42,11 @@ class API_Handler
         return $response_data['success'] ? $response_data : false;
     }
 
-    public function verify_authenticate($email, $verifyMethod, $otp, $token)
+    public function verify_authenticate($user, $verifyMethod, $otp, $token)
     {
 
         $data = array(
-            "email" => $email,
+            "user" => $user,
             "verify_method" => $verifyMethod,
             "value" => $otp,
         );
@@ -59,10 +59,9 @@ class API_Handler
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $json_data);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
             'Content-Type: application/json',
-            'Authorization: Bearer ' . $token
-        ]);
+        ));
 
         $response = curl_exec($ch);
 
@@ -72,6 +71,7 @@ class API_Handler
 
         curl_close($ch);
         $response_data = json_decode($response, true);
+
 
         return $response_data;
     }

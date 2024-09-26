@@ -4,9 +4,9 @@ document.addEventListener("DOMContentLoaded", () => {
   if (typeof popupData !== "undefined" && popupData.isTokenEmpty === "1") {
     document.getElementById("QCWC_loginModal").style.display = "flex";
     document.body.style.overflow = "hidden";
-    document.querySelector(".login-content").style.display = "none";
+    document.querySelector(".login-content").style.display = "block";
     document.querySelector(".verification-content").style.display = "none";
-    document.querySelector(".otp-content").style.display = "block";
+    document.querySelector(".otp-content").style.display = "none";
   }
 
   let isAuthenticated = false;
@@ -60,7 +60,6 @@ document.addEventListener("DOMContentLoaded", () => {
           document.querySelector(".verification-content").style.display =
             "block";
           document.querySelector(".otp-content").style.display = "none";
-          isApiKeyChecked = true;
         }
       },
       error: function () {
@@ -98,7 +97,10 @@ document.addEventListener("DOMContentLoaded", () => {
             isAuthenticated = true;
             // document.querySelector(".login-content").style.display = "none";
             // document.querySelector(".otp-content").style.display = "block";
-            intervalId = setInterval(checkApiKey, 5000);
+
+            checkApiKey();
+
+            // intervalId = setInterval(checkApiKey, 5000);
             if (isApiKeyChecked && isAuthenticated) {
               btnLoader.style.display = "none";
               btnText.style.display = "block";
@@ -174,7 +176,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const data = {
       action: "authenticate_user",
-      email: "mhasank999@gmail.com",
+      email: "abdulsaqib2111d@aptechsite.net",
       verifyMethod: "OTP",
     };
 
@@ -215,9 +217,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const data = {
       action: "authenticate_verify_user",
-      email: "mhasank999@gmail.com",
-      verifyMethod: "JWT",
-      otp: userOtp,
+      user: "abdulsaqib2111d@aptechsite.net",
+      verifyMethod: "OTP",
+      value: `${userOtp}`,
     };
 
     if (userOtp && userOtp !== "") {
@@ -228,11 +230,13 @@ document.addEventListener("DOMContentLoaded", () => {
         type: "POST",
         data: data,
         success: function (response) {
+          console.log(response);
           if (response.success) {
             btnLoader.style.display = "none";
             btnText.style.display = "block";
+            closeModal();
+            fetchUserDetails(userEmail);
           } else {
-            alert("Verification failed: " + response.data);
             btnLoader.style.display = "none";
             btnText.style.display = "block";
           }
