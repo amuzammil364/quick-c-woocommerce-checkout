@@ -1,6 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
   console.log("Main Js Loaded!");
   console.log(popupData);
+  const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,7}$/;
+  let successMessage = document.querySelector(".QCWC_modal-content .message");
+  const email = document.getElementById("userEmail").value;
   if (typeof popupData !== "undefined" && popupData.isTokenEmpty === "1") {
     document.getElementById("QCWC_loginModal").style.display = "flex";
     document.body.style.overflow = "hidden";
@@ -18,8 +21,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.body.style.overflow = "auto";
   }
 
-  let userEmail = "mhasank999@gmail.com";
-
   function fetchUserDetails(email) {
     const data = {
       action: "fetch_user_details",
@@ -31,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
       type: "GET",
       data: data,
       success: function (response) {
-        console.log(response);
+        // window.location.reload();
       },
       error: function () {
         alert("There was an error with the request.");
@@ -39,9 +40,14 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  fetchUserDetails(email);
+
+  let intervalId;
+
   function checkApiKey() {
     const data = {
       action: "check_api_key",
+      email: email,
     };
 
     jQuery.ajax({
@@ -51,15 +57,26 @@ document.addEventListener("DOMContentLoaded", () => {
       success: function (response) {
         if (response.status_code === 200) {
           closeModal();
-          clearInterval(intervalId);
-          console.log("API key check successful, interval stopped.");
+          stopApiKeyCheck();
+          successMessage.classList.remove("active");
+          successMessage.innerHTML = "";
           isApiKeyChecked = true;
-          fetchUserDetails(userEmail);
-        } else {
+          fetchUserDetails(email);
+        } else if (
+          response.status_code === 401 ||
+          response.status_code === 400
+        ) {
+          stopApiKeyCheck();
           document.querySelector(".login-content").style.display = "none";
           document.querySelector(".verification-content").style.display =
             "block";
           document.querySelector(".otp-content").style.display = "none";
+          successMessage.classList.remove("active");
+          successMessage.innerHTML = "";
+        } else {
+          startApiKeyCheck();
+          successMessage.classList.add("active");
+          successMessage.innerHTML = "Authenticating...";
         }
       },
       error: function () {
@@ -69,23 +86,41 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  let intervalId;
+  function startApiKeyCheck() {
+    clearInterval(intervalId);
+    intervalId = setInterval(checkApiKey, 5000);
+  }
+
+  function stopApiKeyCheck() {
+    clearInterval(intervalId);
+  }
 
   document.getElementById("authenticateButton").onclick = async function () {
-    const emailValue = document.getElementById("userEmail").value;
+    const email = document.getElementById("userEmail");
     const btnLoader = document.querySelector(".btn-loader");
     const btnText = document.querySelector(".btn-text");
+    const errorText1 = document.querySelector(".errorText1");
 
-    if (!emailValue) {
-      alert("Please enter your email!");
+    if (!email.value) {
+      email.style.borderColor = "red";
+      errorText1.classList.add("active");
+      errorText1.innerHTML = "Please input your email!";
+    } else if (!emailPattern.test(email.value)) {
+      email.style.borderColor = "red";
+      errorText1.classList.add("active");
+      errorText1.innerHTML = "Please input your valid email!";
+    } else {
+      email.style.borderColor = "#dfe2e8";
+      errorText1.classList.remove("active");
+      errorText1.innerHTML = "";
     }
 
     const data = {
       action: "authenticate_user",
-      email: emailValue,
+      email: email.value,
     };
 
-    if (emailValue && emailValue !== "") {
+    if (email.value && email.value !== "" && emailPattern.test(email.value)) {
       btnLoader.style.display = "block";
       btnText.style.display = "none";
       jQuery.ajax({
@@ -95,19 +130,16 @@ document.addEventListener("DOMContentLoaded", () => {
         success: function (response) {
           if (response.success) {
             isAuthenticated = true;
-            // document.querySelector(".login-content").style.display = "none";
-            // document.querySelector(".otp-content").style.display = "block";
-
             checkApiKey();
-
-            // intervalId = setInterval(checkApiKey, 5000);
-            if (isApiKeyChecked && isAuthenticated) {
+            if (isAuthenticated) {
               btnLoader.style.display = "none";
               btnText.style.display = "block";
+              document.querySelector(".login-content").style.pointerEvents =
+                "none";
             }
           } else {
-            alert("Authentication failed: " + response.data);
-            if (isApiKeyChecked && isAuthenticated) {
+            alert("Authentication failed");
+            if (isAuthenticated) {
               btnLoader.style.display = "none";
               btnText.style.display = "block";
             }
@@ -144,14 +176,17 @@ document.addEventListener("DOMContentLoaded", () => {
       success: function (response) {
         if (response.success) {
           isAuthenticated = true;
-          intervalId = setInterval(checkApiKey, 5000);
-          if (isApiKeyChecked && isAuthenticated) {
+          checkApiKey();
+          if (isAuthenticated) {
             btnLoader.style.display = "none";
             btnText.style.display = "block";
+            document.querySelector(
+              ".verification-content"
+            ).style.pointerEvents = "none";
           }
         } else {
-          alert("Authentication failed: " + response.data);
-          if (isApiKeyChecked && isAuthenticated) {
+          alert("Authentication failed");
+          if (isAuthenticated) {
             btnLoader.style.display = "none";
             btnText.style.display = "block";
           }
@@ -176,7 +211,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const data = {
       action: "authenticate_user",
-      email: "abdulsaqib2111d@aptechsite.net",
+      email: emailValue,
       verifyMethod: "OTP",
     };
 
@@ -217,7 +252,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const data = {
       action: "authenticate_verify_user",
-      user: "abdulsaqib2111d@aptechsite.net",
+      user: emailValue,
       verifyMethod: "OTP",
       value: `${userOtp}`,
     };
@@ -235,7 +270,7 @@ document.addEventListener("DOMContentLoaded", () => {
             btnLoader.style.display = "none";
             btnText.style.display = "block";
             closeModal();
-            fetchUserDetails(userEmail);
+            fetchUserDetails(emailValue);
           } else {
             btnLoader.style.display = "none";
             btnText.style.display = "block";

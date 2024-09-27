@@ -75,13 +75,17 @@ function start_session()
 
 function get_quick_c_user_token_from_session()
 {
-    return isset($_SESSION['quick-c-user-token']) ? $_SESSION['quick-c-user-token'] : false;
+    if (isset($_SESSION['quick_c_user_token']) && !empty($_SESSION['quick_c_user_token'])) {
+        return $_SESSION['quick_c_user_token'];
+    } else {
+        return '';
+    }
 }
 
 function remove_auth_token_from_session()
 {
-    if (isset($_SESSION['quick-c-user-token'])) {
-        unset($_SESSION['quick-c-user-token']);
+    if (isset($_SESSION['quick_c_user_token'])) {
+        unset($_SESSION['quick_c_user_token']);
     }
 }
 
@@ -115,7 +119,8 @@ function QCWC_custom_popup_html()
                     <h2>Authentication Required</h2>
                     <div class="QCWC_form-group">
                         <label for="#userEmail">Email Address</label>
-                        <input type="email" id="userEmail" placeholder="Enter your Email Address" value="">
+                        <input type="email" id="userEmail" value="mhasank999@gmail.com" placeholder="Enter your Email Address" value="">
+                        <span class="errorText errorText1"></span>
                     </div>
                     <button id="authenticateButton" type="button"><span class="btn-text">Authenticate</span> <span class="btn-loader"></span> </button>
                 </div>
@@ -163,8 +168,8 @@ function QCWC_handle_authentication()
     $response = $api_handler->authenticate($email, $domain, $platForm, $verifyMethod);
 
     if ($response) {
-        $_SESSION['quick-c-user-token'] = $response['data']['data']['token'];
-        wp_send_json_success($response);
+        $_SESSION['quick_c_user_token'] = $response['data']['token'];
+        wp_send_json($response);
     } else {
         wp_send_json_error('Authentication failed');
     }
@@ -226,11 +231,11 @@ function QCWC_check_api_key()
     $domain = $protocol . $_SERVER['HTTP_HOST'];
 
     $platForm = "Wordpress";
-    $email = "mhasank999@gmail.com";
+    $email = isset($_GET['email']) ? sanitize_email($_GET['email']) : '';
 
-    $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/platform/api-key/');
+    $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/platform/api-key/?domain=' . $domain . '&platform=' . $platForm . '&user=' . $email . '&token=' . $user_token . '');
+    $response = $api_handler->checkApiKey();
 
-    $response = $api_handler->checkApiKey($user_token, $domain, $platForm, $email);
     // $user_id = get_current_user_id();
     // delete_user_meta($user_id, 'quick-c-user-api-key');
     // remove_auth_token_from_session();
@@ -255,13 +260,29 @@ add_action('wp_ajax_nopriv_fetch_user_details', 'QCWC_fetch_user_details');
 function QCWC_fetch_user_details()
 {
 
-    $user_token = get_quick_c_user_token_from_session();
+    $user_id = get_current_user_id();
+    $user_token = get_user_meta($user_id, 'quick-c-user-api-key', true);
     $email = $_POST['email'];
 
     $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/user/details/');
     $response = $api_handler->getUserDetail($user_token, $email);
 
     if ($response) {
+        update_user_meta($user_id, 'shipping_' . "first_name", $response['data']['first_name']);
+        update_user_meta($user_id, 'shipping_' . "last_name", $response['data']['last_name']);
+        update_user_meta($user_id, 'shipping_' . "postcode", $response['data']['addresses'][0]['postal_code']);
+        update_user_meta($user_id, 'shipping_' . "city", $response['data']['addresses'][0]['city']);
+        update_user_meta($user_id, 'shipping_' . "phone", $response['data']['profile']['primary_contact']);
+        update_user_meta($user_id, 'shipping_' . "address_1", $response['data']['addresses'][0]['short_address']);
+        update_user_meta($user_id, 'shipping_' . "address_2", "");
+
+        update_user_meta($user_id, 'billing_first_name', $response['data']['first_name']);
+        update_user_meta($user_id, 'billing_last_name', $response['data']['last_name']);
+        update_user_meta($user_id, 'billing_postcode', $response['data']['addresses'][0]['postal_code']);
+        update_user_meta($user_id, 'billing_city', $response['data']['addresses'][0]['city']);
+        update_user_meta($user_id, 'billing_phone', $response['data']['profile']['primary_contact']);
+        update_user_meta($user_id, 'billing_address_1', $response['data']['addresses'][0]['short_address']);
+        update_user_meta($user_id, 'billing_address_2', "");
 
         wp_send_json($response);
 
@@ -271,5 +292,82 @@ function QCWC_fetch_user_details()
 
 }
 
+add_action('woocommerce_thankyou', 'QCWC_create_order');
+
+function QCWC_create_order($order_id)
+{
+
+    $order = wc_get_order($order_id);
+
+    if ($order_id) {
+
+        $data = array(
+            "order_id" => $order_id,
+            "store_name" => "Quick-c",
+            "store_image" => "",
+            "current_status" => "pending",
+            "order_items" => array(),
+        );
+
+        foreach ($order->get_items() as $item_id => $item) {
+            $product_name = $item->get_name();
+            $quantity = $item->get_quantity();
+
+            $product = $item->get_product();
+
+            $image_url = '';
+            if ($product && $product->get_image_id()) {
+                $image_url = wp_get_attachment_url($product->get_image_id());
+            }
+
+            $data['order_items'][] = array(
+                'item_name' => $product_name,
+                'quantity' => $quantity,
+                'item_image' => $image_url,
+            );
+        }
+
+        $json_data = json_encode($data);
+
+        $user_id = get_current_user_id();
+        $user_token = get_user_meta($user_id, 'quick-c-user-api-key', true);
+        echo $user_token;
+        $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/order/create/');
+        $response = $api_handler->createOrder($user_token, $json_data);
+
+        var_dump($response);
+
+    }
+
+}
+
+add_action('woocommerce_order_status_changed', 'QCWC_update_order', 10, 1);
+
+function QCWC_update_order($order_id)
+{
+
+    $order = wc_get_order($order_id);
+
+    if ($order_id) {
+
+        $data = array(
+            "store_name" => "Quick-c",
+            "current_status" => $order->get_status(),
+            "order_items" => array(),
+        );
+
+        $json_data = json_encode($data);
+
+        $user_id = get_current_user_id();
+        $user_token = get_user_meta($user_id, 'quick-c-user-api-key', true);
+        echo $user_token;
+        $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/order/update/' . $order_id . '');
+        $response = $api_handler->updateOrder($user_token, $json_data);
+
+        echo '<p>Order updated successfully.</p>';
+
+    }
+
+}
 
 ?>

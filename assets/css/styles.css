@@ -21,6 +21,19 @@
   border-radius: 10px;
 }
 
+.QCWC_loginModal .QCWC_modal-content .message {
+  background-color: #00800047;
+  color: green;
+  font-size: 16px;
+  text-align: center;
+  border-radius: 6px;
+}
+
+.QCWC_loginModal .QCWC_modal-content .message.active {
+  padding: 16px 20px;
+  margin-bottom: 20px;
+}
+
 .QCWC_loginModal .login-content h2 {
   margin-bottom: 20px;
 }
@@ -59,6 +72,16 @@
   border: 1px solid #dfe2e8;
   color: #000;
   font-size: 16px;
+}
+
+.QCWC_loginModal .QCWC_modal-content .errorText {
+  color: red;
+  font-size: 14px;
+}
+
+.QCWC_loginModal .QCWC_modal-content .errorText.active {
+  display: inline-block;
+  margin-top: 6px;
 }
 
 .QCWC_loginModal .QCWC_modal-content input#userOtp {

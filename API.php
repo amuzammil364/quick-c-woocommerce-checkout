@@ -39,7 +39,7 @@ class API_Handler
         curl_close($ch);
         $response_data = json_decode($response, true);
 
-        return $response_data['success'] ? $response_data : false;
+        return $response_data;
     }
 
     public function verify_authenticate($user, $verifyMethod, $otp, $token)
@@ -111,24 +111,16 @@ class API_Handler
         return $response_data;
     }
 
-    public function checkApiKey($token, $domain, $platform, $email)
+    public function checkApiKey()
     {
 
-        $url = sprintf(
-            '%s?domain=%s&platform=%s&user=%s',
-            $this->api_url,
-            urlencode($domain),
-            urlencode($platform),
-            urlencode($email)
-        );
-
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_URL, $this->api_url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Content-Type: application/json',
-            'Authorization: Bearer ' . $token
         ]);
+
 
         $response = curl_exec($ch);
 
@@ -157,7 +149,7 @@ class API_Handler
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Content-Type: application/json',
-            'Authorization: ' . 'Bearer ' . $token,
+            'x-api-key: ' . $token . '',
         ]);
 
         $response = curl_exec($ch);
@@ -171,5 +163,53 @@ class API_Handler
         $response_data = json_decode($response, true);
         return $response_data;
 
+    }
+
+    public function createOrder($api_key, $data)
+    {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $this->api_url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'x-api-key: ' . $api_key . '',
+        ]);
+
+        $response = curl_exec($ch);
+
+        if (curl_errno($ch)) {
+            return false;
+        }
+
+        curl_close($ch);
+
+        $response_data = json_decode($response);
+        return $response_data;
+    }
+
+    public function updateOrder($api_key, $data)
+    {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $this->api_url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'x-api-key: ' . $api_key . '',
+        ]);
+
+        $response = curl_exec($ch);
+
+        if (curl_errno($ch)) {
+            return false;
+        }
+
+        curl_close($ch);
+
+        $response_data = json_decode($response);
+        return $response_data;
     }
 }
