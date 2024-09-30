@@ -2,15 +2,17 @@
 
 /**
  * Plugin Name:       Quick C Woocommerce Checkout
- * Plugin URI:        https://themuzammil.com/
+ * Plugin URI:        https://noderavel.com/
  * Description:       Connects with the SolarEdge scrape
  * Version:           1.0.0
  * Requires at least: 5.5
  * Requires PHP:      7.2
  * Author:            Muzammil Ahmed
- * Author URI:        https://themuzammil.com/
+ * Author URI:        https://noderavel.com/
  * License:           GPL v2 or later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
+ *
+ * Plugin Icon: assets/images/icon-logo.png
  */
 
 /**
@@ -19,6 +21,8 @@
 defined('ABSPATH') or die('This path is not accessable');
 
 require_once plugin_dir_path(__FILE__) . 'API.php';
+global $platform;
+$platform = 'WordPress';
 
 /**
  * Include js and css files
@@ -114,17 +118,20 @@ function QCWC_custom_popup_html()
         ?>
         <div id="QCWC_loginModal" class="QCWC_loginModal" style="display: none;">
             <div class="QCWC_modal-content">
-                <p class="message"></p>
+                <p class="message"><span class="text"></span><span class="loader"></span></p>
+                <p class="error-message"></p>
                 <div class="login-content">
+                    <img src="<?php echo plugins_url('assets/images/icon-logo.png', __FILE__); ?>" />
                     <h2>Authentication Required</h2>
                     <div class="QCWC_form-group">
                         <label for="#userEmail">Email Address</label>
-                        <input type="email" id="userEmail" value="mhasank999@gmail.com" placeholder="Enter your Email Address" value="">
+                        <input type="email" id="userEmail" value="" placeholder="Enter your Email Address" value="">
                         <span class="errorText errorText1"></span>
                     </div>
                     <button id="authenticateButton" type="button"><span class="btn-text">Authenticate</span> <span class="btn-loader"></span> </button>
                 </div>
                 <div class="verification-content" style="display: none;">
+                    <img src="<?php echo plugins_url('assets/images/icon-logo.png', __FILE__); ?>" />
                     <h2>Verification Required</h2>
                     <p>Please select the verification option to verify</p>
                     <div class="btns">
@@ -133,11 +140,13 @@ function QCWC_custom_popup_html()
                     </div>
                 </div>
                 <div class="otp-content" style="display: none;">
+                    <img src="<?php echo plugins_url('assets/images/icon-logo.png', __FILE__); ?>" />
                     <h2>Verify OTP</h2>
                     <p>Enter the code from the email we sent you</p>
                     <div class="verify-otp-input">
                         <div class="QCWC_form-group">
                             <input type="number" id="userOtp" maxlength="5" placeholder="00000" />
+                            <span class="errorText errorText2"></span>
                         </div>
                         <button id="verifyOtpButton" type="button"><span class="btn-text">Submit</span> <span class="btn-loader"></span></button>
                     </div>
@@ -161,11 +170,11 @@ function QCWC_handle_authentication()
     $email = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443 ? "https://" : "http://";
     $domain = $protocol . $_SERVER['HTTP_HOST'];
-    $platForm = "Wordpress";
+    global $platform;
     $verifyMethod = isset($_POST['verifyMethod']) ? sanitize_text_field($_POST['verifyMethod']) : 'JWT';
 
     $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/platform/login-by-portal/');
-    $response = $api_handler->authenticate($email, $domain, $platForm, $verifyMethod);
+    $response = $api_handler->authenticate($email, $domain, $platform, $verifyMethod);
 
     if ($response) {
         $_SESSION['quick_c_user_token'] = $response['data']['token'];
@@ -207,19 +216,18 @@ register_activation_hook(__FILE__, 'QCWC_woocommerce_plugin_activate');
 function QCWC_woocommerce_plugin_activate()
 {
 
-    $name = "Wordpress";
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443 ? "https://" : "http://";
     $domain = $protocol . $_SERVER['HTTP_HOST'];
+    global $platform;
     $description = "An example wordpress platform for demonstration.";
     $ip_address = $_SERVER['REMOTE_ADDR'];
 
+    if (class_exists('API_Handler')) {
+        $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/platform/register/');
+        $response = $api_handler->registerPlatForm($platform, $domain, $description, $ip_address);
+    }
 
-    $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/platform/register/');
-    $response = $api_handler->registerPlatForm($name, $domain, $description, $ip_address);
-
-    var_dump($response);
 }
-
 
 add_action('wp_ajax_check_api_key', 'QCWC_check_api_key');
 add_action('wp_ajax_nopriv_check_api_key', 'QCWC_check_api_key');
@@ -229,11 +237,10 @@ function QCWC_check_api_key()
 
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443 ? "https://" : "http://";
     $domain = $protocol . $_SERVER['HTTP_HOST'];
-
-    $platForm = "Wordpress";
+    global $platform;
     $email = isset($_GET['email']) ? sanitize_email($_GET['email']) : '';
 
-    $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/platform/api-key/?domain=' . $domain . '&platform=' . $platForm . '&user=' . $email . '&token=' . $user_token . '');
+    $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/platform/api-key/?domain=' . $domain . '&platform=' . $platform . '&user=' . $email . '&token=' . $user_token . '');
     $response = $api_handler->checkApiKey();
 
     // $user_id = get_current_user_id();
@@ -331,17 +338,14 @@ function QCWC_create_order($order_id)
 
         $user_id = get_current_user_id();
         $user_token = get_user_meta($user_id, 'quick-c-user-api-key', true);
-        echo $user_token;
         $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/order/create/');
         $response = $api_handler->createOrder($user_token, $json_data);
-
-        var_dump($response);
 
     }
 
 }
 
-add_action('woocommerce_order_status_changed', 'QCWC_update_order', 10, 1);
+add_action('woocommerce_order_status_changed', 'QCWC_update_order', 10, 4);
 
 function QCWC_update_order($order_id)
 {
@@ -350,21 +354,37 @@ function QCWC_update_order($order_id)
 
     if ($order_id) {
 
+
         $data = array(
             "store_name" => "Quick-c",
             "current_status" => $order->get_status(),
             "order_items" => array(),
         );
 
+        foreach ($order->get_items() as $item_id => $item) {
+            $product_name = $item->get_name();
+            $quantity = $item->get_quantity();
+
+            $product = $item->get_product();
+
+            $image_url = '';
+            if ($product && $product->get_image_id()) {
+                $image_url = wp_get_attachment_url($product->get_image_id());
+            }
+
+            $data['order_items'][] = array(
+                'item_name' => $product_name,
+                'quantity' => $quantity,
+                'item_image' => $image_url,
+            );
+        }
+
         $json_data = json_encode($data);
 
         $user_id = get_current_user_id();
         $user_token = get_user_meta($user_id, 'quick-c-user-api-key', true);
-        echo $user_token;
-        $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/order/update/' . $order_id . '');
+        $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/order/update/' . $order_id . '/');
         $response = $api_handler->updateOrder($user_token, $json_data);
-
-        echo '<p>Order updated successfully.</p>';
 
     }
 

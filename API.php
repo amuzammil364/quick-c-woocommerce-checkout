@@ -201,6 +201,8 @@ class API_Handler
             'x-api-key: ' . $api_key . '',
         ]);
 
+        var_dump($this->api_url);
+
         $response = curl_exec($ch);
 
         if (curl_errno($ch)) {
