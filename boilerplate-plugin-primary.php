@@ -22,7 +22,7 @@ defined('ABSPATH') or die('This path is not accessable');
 
 require_once plugin_dir_path(__FILE__) . 'API.php';
 global $platform;
-$platform = 'WordPress';
+$platform = 'wp';
 
 /**
  * Include js and css files
@@ -211,7 +211,7 @@ function QCWC_handle_verify_authentication()
 
 
 
-register_activation_hook(__FILE__, 'QCWC_woocommerce_plugin_activate');
+// register_activation_hook(__FILE__, 'QCWC_woocommerce_plugin_activate');
 
 function QCWC_woocommerce_plugin_activate()
 {
@@ -219,15 +219,17 @@ function QCWC_woocommerce_plugin_activate()
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443 ? "https://" : "http://";
     $domain = $protocol . $_SERVER['HTTP_HOST'];
     global $platform;
+    echo "Platform Name : $platform <br />";
     $description = "An example wordpress platform for demonstration.";
     $ip_address = $_SERVER['REMOTE_ADDR'];
 
-    if (class_exists('API_Handler')) {
-        $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/platform/register/');
-        $response = $api_handler->registerPlatForm($platform, $domain, $description, $ip_address);
-    }
+    $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/platform/register/');
+    $response = $api_handler->registerPlatForm($platform, $domain, $description, $ip_address);
 
+    var_dump($response);
 }
+
+add_action("wp_footer", "QCWC_woocommerce_plugin_activate");
 
 add_action('wp_ajax_check_api_key', 'QCWC_check_api_key');
 add_action('wp_ajax_nopriv_check_api_key', 'QCWC_check_api_key');
