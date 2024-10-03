@@ -111,7 +111,7 @@ class API_Handler
         return $response_data;
     }
 
-    public function checkApiKey()
+    public function checkApiKey($token)
     {
 
         $ch = curl_init();
@@ -119,6 +119,7 @@ class API_Handler
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Content-Type: application/json',
+            'Authorization: JWT ' . $token
         ]);
 
 
@@ -185,7 +186,7 @@ class API_Handler
 
         curl_close($ch);
 
-        $response_data = json_decode($response);
+        $response_data = json_decode($response, true);
         return $response_data;
     }
 
@@ -200,8 +201,6 @@ class API_Handler
             'Content-Type: application/json',
             'x-api-key: ' . $api_key . '',
         ]);
-
-        var_dump($this->api_url);
 
         $response = curl_exec($ch);
 

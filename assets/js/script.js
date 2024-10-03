@@ -1,6 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
   console.log("Main Js Loaded!");
-  console.log(popupData);
   const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,7}$/;
   let successMessage = document.querySelector(".QCWC_modal-content .message");
   let successMessageText = document.querySelector(
@@ -10,21 +9,44 @@ document.addEventListener("DOMContentLoaded", () => {
     ".QCWC_modal-content .error-message"
   );
   let email = document.getElementById("userEmail");
+  let user_addresses = document.querySelector(".user-addresses");
+  let user_delivery_prefences_list = document.querySelector(
+    ".user-delivery-prefences-list"
+  );
+  let userDetail = {};
+  let user_address_loader = document.querySelector(".user-address-loader");
+  let user_delivery_prefences_loader = document.querySelector(
+    ".user-delivery-prefences-loader"
+  );
+  email.value = popupData.userEmail;
+
   if (typeof popupData !== "undefined" && popupData.isTokenEmpty === "1") {
     document.getElementById("QCWC_loginModal").style.display = "flex";
     document.body.style.overflow = "hidden";
     document.querySelector(".login-content").style.display = "block";
     document.querySelector(".verification-content").style.display = "none";
     document.querySelector(".otp-content").style.display = "none";
-
-    email.value = popupData.userEmail;
   }
+
+  const editAddressButton = document.querySelector("#edit-address-button");
+
+  editAddressButton.addEventListener("click", function () {
+    fetchUserDetails("mhasank999@gmail.com");
+    document.getElementById("QCWC_addressesModal").style.display = "flex";
+    document.body.style.overflow = "hidden";
+  });
 
   let isAuthenticated = false;
   let isApiKeyChecked = false;
 
   function closeModal() {
     const modal = document.getElementById("QCWC_loginModal");
+    modal.style.display = "none";
+    document.body.style.overflow = "auto";
+  }
+
+  function closeAddressesModal() {
+    const modal = document.getElementById("QCWC_addressesModal");
     modal.style.display = "none";
     document.body.style.overflow = "auto";
   }
@@ -40,13 +62,123 @@ document.addEventListener("DOMContentLoaded", () => {
       type: "GET",
       data: data,
       success: function (response) {
-        window.location.reload();
+        userDetail = response.data;
+        let userAddressesHtml = "";
+        let userDeliveryPrefencesHtml = "";
+
+        if (userDetail) {
+          userDetail.addresses.forEach((address) => {
+            userAddressesHtml += `
+            <div class="address">
+              <label class="custom-radio">
+                <input type="radio" name="user_address" value="${
+                  address.id
+                }" data-street_address="${address.short_address}" data-city="${
+              address.city
+            }" data-postal_code="${address.postal_code}" ${
+              address.is_primary ? "checked" : ""
+            } />
+             <span class="radio-custom"></span>
+                ${address.street_name}, ${address.city}, ${address.postal_code}
+              </label>
+              </div>
+            `;
+          });
+          userDetail.delivery_preferences.forEach((userDelivery) => {
+            const startTime = userDelivery.start_time
+              ? userDelivery.start_time
+              : "N/A";
+            const endTime = userDelivery.end_time
+              ? userDelivery.end_time
+              : "N/A";
+            userDeliveryPrefencesHtml += `
+            <div class="preference">
+              <label class="custom-radio">
+                <input type="radio" name="delivery_preference" value="${
+                  userDelivery.id
+                }" data-day="${
+              userDelivery.day
+            }" data-start_time="${startTime}" data-end_time="${endTime}" ${
+              userDelivery.is_primary ? "checked" : ""
+            } />
+                <span class="radio-custom"></span>
+                <span>${userDelivery.day} ( ${startTime} - ${endTime} )</span>
+              </label>
+            </div>
+            `;
+          });
+          user_addresses.innerHTML += userAddressesHtml;
+          user_delivery_prefences_list.innerHTML += userDeliveryPrefencesHtml;
+          user_address_loader.style.display = "none";
+          user_delivery_prefences_loader.style.display = "none";
+        } else {
+          user_address_loader.style.display = "block";
+          user_delivery_prefences_loader.style.display = "block";
+        }
       },
       error: function () {
         alert("There was an error with the request.");
       },
     });
   }
+
+  document
+    .getElementById("confirmAddressButton")
+    .addEventListener("click", function () {
+      const selectedAddress = document.querySelector(
+        'input[name="user_address"]:checked'
+      );
+      const selectedPrefence = document.querySelector(
+        'input[name="delivery_preference"]:checked'
+      );
+
+      const btnLoader = document.querySelector(".confirm-btn-loader");
+      const btnText = document.querySelector(".confirm-btn-text");
+      const streetAddress = selectedAddress.getAttribute("data-street_address");
+      const city = selectedAddress.getAttribute("data-city");
+      const postalCode = selectedAddress.getAttribute("data-postal_code");
+
+      const day = selectedPrefence.getAttribute("data-day");
+      const start_time = selectedPrefence.getAttribute("data-start_time");
+      const end_time = selectedPrefence.getAttribute("data-end_time");
+
+      const data = {
+        action: "save_user_detail",
+        first_name: userDetail?.first_name,
+        last_name: userDetail?.last_name,
+        phone: userDetail.profile.primary_contact,
+        street_address: streetAddress,
+        city: city,
+        postal_code: postalCode,
+        day: day,
+        start_time: start_time,
+        end_time: end_time,
+      };
+
+      if (selectedAddress) {
+        btnLoader.style.display = "block";
+        btnText.style.display = "none";
+        document.querySelector(".user-detail-content").style.opacity = "0.6";
+        jQuery.ajax({
+          url: ajaxurl,
+          type: "POST",
+          data: data,
+          success: function (response) {
+            btnLoader.style.display = "none";
+            btnText.style.display = "block";
+            document.querySelector(".user-detail-content").style.opacity = "1";
+            closeAddressesModal();
+            window.location.reload();
+          },
+          error: function () {
+            alert("There was an error with the request.");
+            btnLoader.style.display = "none";
+            btnText.style.display = "block";
+            document.querySelector(".user-detail-content").style.opacity = "1";
+          },
+        });
+      }
+    });
 
   let intervalId;
 
@@ -148,7 +280,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 "none";
               document.querySelector(".login-content").style.opacity = "0.6";
             }
-            errorMessage.classList.add("remove");
+            errorMessage.classList.remove("active");
             errorMessage.innerHTML = "";
           } else {
             isAuthenticated = true;
@@ -209,7 +341,7 @@ document.addEventListener("DOMContentLoaded", () => {
             document.querySelector(".verification-content").style.opacity =
               "0.6";
           }
-          errorMessage.classList.add("remove");
+          errorMessage.classList.remove("active");
           errorMessage.innerHTML = "";
         } else {
           isAuthenticated = true;
@@ -265,7 +397,7 @@ document.addEventListener("DOMContentLoaded", () => {
           document.querySelector(".verification-content").style.display =
             "none";
           document.querySelector(".otp-content").style.display = "block";
-          errorMessage.classList.add("remove");
+          errorMessage.classList.remove("active");
           errorMessage.innerHTML = "";
         } else {
           errorMessage.classList.add("active");
@@ -329,7 +461,7 @@ document.addEventListener("DOMContentLoaded", () => {
           if (response.success) {
             btnLoader.style.display = "none";
             btnText.style.display = "block";
-            errorMessage.classList.add("remove");
+            errorMessage.classList.remove("active");
             errorMessage.innerHTML = "";
             closeModal();
             fetchUserDetails(emailValue);

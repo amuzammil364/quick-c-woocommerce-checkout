@@ -11,6 +11,7 @@
  * Author URI:        https://noderavel.com/
  * License:           GPL v2 or later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
+ * Text Domain: quick-c-woocommerce-checkout-plugin
  *
  * Plugin Icon: assets/images/icon-logo.png
  */
@@ -22,7 +23,7 @@ defined('ABSPATH') or die('This path is not accessable');
 
 require_once plugin_dir_path(__FILE__) . 'API.php';
 global $platform;
-$platform = 'wp';
+$platform = 'WP';
 
 /**
  * Include js and css files
@@ -77,6 +78,71 @@ function start_session()
     }
 }
 
+// Function to register custom order statuses
+function my_custom_register_order_statuses()
+{
+    register_post_status('wc-created', array(
+        'label' => _x('Created', 'Order status', 'quick-c-woocommerce-checkout-plugin'),
+        'public' => true,
+        'exclude_from_search' => false,
+        'show_in_admin_all_list' => true,
+        'show_in_admin_status_list' => true,
+        'show_in_invoice' => true,
+        'label_count' => _n_noop('Created (%s)', 'Created (%s)', 'quick-c-woocommerce-checkout-plugin'),
+    ));
+
+    register_post_status('wc-transit', array(
+        'label' => _x('In Transit', 'Order status', 'quick-c-woocommerce-checkout-plugin'),
+        'public' => true,
+        'exclude_from_search' => false,
+        'show_in_admin_all_list' => true,
+        'show_in_admin_status_list' => true,
+        'show_in_invoice' => true,
+        'label_count' => _n_noop('In Transit (%s)', 'In Transit (%s)', 'quick-c-woocommerce-checkout-plugin'),
+    ));
+
+    register_post_status('wc-delivered', array(
+        'label' => _x('Delivered', 'Order status', 'quick-c-woocommerce-checkout-plugin'),
+        'public' => true,
+        'exclude_from_search' => false,
+        'show_in_admin_all_list' => true,
+        'show_in_admin_status_list' => true,
+        'show_in_invoice' => true,
+        'label_count' => _n_noop('Delivered (%s)', 'Delivered (%s)', 'quick-c-woocommerce-checkout-plugin'),
+    ));
+}
+
+
+register_activation_hook(__FILE__, function () {
+    QCWC_woocommerce_plugin_activate();
+    my_custom_register_order_statuses();
+});
+
+function QCWC_woocommerce_plugin_activate()
+{
+
+    // $domain = $_SERVER['HTTP_HOST'];
+    $domain = "saqibdev.com";
+    global $platform;
+    $description = "An example wordpress platform for demonstration.";
+    $ip_address = $_SERVER['REMOTE_ADDR'];
+
+    $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/platform/register/');
+    $response = $api_handler->registerPlatForm($platform, $domain, $description, $ip_address);
+
+}
+
+function my_custom_add_order_statuses($order_statuses)
+{
+    $order_statuses['wc-created'] = _x('Created', 'Order status', 'my-custom-plugin');
+    $order_statuses['wc-transit'] = _x('In Transit', 'Order status', 'my-custom-plugin');
+    $order_statuses['wc-delivered'] = _x('Delivered', 'Order status', 'my-custom-plugin');
+    return $order_statuses;
+}
+
+add_action('init', 'my_custom_register_order_statuses');
+add_filter('wc_order_statuses', 'my_custom_add_order_statuses');
+
 function get_quick_c_user_token_from_session()
 {
     if (isset($_SESSION['quick_c_user_token']) && !empty($_SESSION['quick_c_user_token'])) {
@@ -109,6 +175,40 @@ function QCWC_custom_checkout_popup()
     }
 }
 add_action('wp_enqueue_scripts', 'QCWC_custom_checkout_popup');
+
+
+
+function add_custom_button_checkout()
+{
+    if (is_user_logged_in()) {
+        echo '<div class="edit-address-container">';
+        echo '<button id="edit-address-button" type="button" class="button">Edit Address</button>';
+        echo '</div>';
+    }
+}
+add_action('woocommerce_before_checkout_billing_form', 'add_custom_button_checkout', 10);
+
+function display_delivery_preferences_checkout($checkout)
+{
+    if (is_user_logged_in()) {
+        $user_id = get_current_user_id();
+
+        $delivery_preferences = get_user_meta($user_id, 'delivery_preferences', true);
+
+        $day = isset($delivery_preferences['day']) ? $delivery_preferences['day'] : '';
+        $start_time = isset($delivery_preferences['start_time']) ? $delivery_preferences['start_time'] : '';
+        $end_time = isset($delivery_preferences['end_time']) ? $delivery_preferences['end_time'] : '';
+
+        // Output the preferences on the checkout page
+        echo '<div id="delivery-preferences-section">';
+        echo '<h3> Your Delivery Preferences</h3>';
+        echo '<p><strong>' . __('Day:') . '</strong> ' . esc_html($day) . '</p>';
+        echo '<p><strong>' . __('Start Time:') . '</strong> ' . esc_html($start_time) . '</p>';
+        echo '<p><strong>' . __('End Time:') . '</strong> ' . esc_html($end_time) . '</p>';
+        echo '</div>';
+    }
+}
+add_action('woocommerce_before_order_notes', 'display_delivery_preferences_checkout');
 
 
 // Add Authentication and Verify OTP Modal
@@ -158,6 +258,40 @@ function QCWC_custom_popup_html()
 }
 add_action('wp_footer', 'QCWC_custom_popup_html');
 
+function QCWC_custom_addresses_html()
+{
+
+    $user_id = get_current_user_id();
+    $user_token = get_user_meta($user_id, 'quick-c-user-api-key', true);
+    $check_user_token = empty($user_token);
+
+    if (is_checkout() && $check_user_token !== "1") {
+        ?>
+        <div id="QCWC_addressesModal" class="QCWC_addressesModal">
+            <div class="QCWC_modal-content">
+                <div class="user-detail-content">
+                    <img src="<?php echo plugins_url('assets/images/icon-logo.png', __FILE__); ?>" />
+                    <h2>Please Select Address</h2>
+                    <div class="user-address">
+                        <div class="user-addresses"></div>
+                        <div class="user-address-loader"></div>
+                    </div>
+                    <div class="user-delivery-prefences">
+                        <h2>Please Select Delivery Preferences</h2>
+                        <div class="user-delivery-prefences-loader"></div>
+                        <div class="user-delivery-prefences-list">
+                        </div>
+                    </div>
+                    <button id="confirmAddressButton" type="button"><span class="confirm-btn-text">Confirm</span><span class="btn-loader confirm-btn-loader"></span></button>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+
+}
+
+add_action('wp_footer', 'QCWC_custom_addresses_html');
 
 
 // Authentication Ajax
@@ -168,8 +302,9 @@ add_action('wp_ajax_nopriv_authenticate_user', 'QCWC_handle_authentication');
 function QCWC_handle_authentication()
 {
     $email = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
-    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443 ? "https://" : "http://";
-    $domain = $protocol . $_SERVER['HTTP_HOST'];
+    // $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443 ? "https://" : "http://";
+    // $domain = $protocol . $_SERVER['HTTP_HOST'];
+    $domain = "saqibdev.com";
     global $platform;
     $verifyMethod = isset($_POST['verifyMethod']) ? sanitize_text_field($_POST['verifyMethod']) : 'JWT';
 
@@ -209,41 +344,20 @@ function QCWC_handle_verify_authentication()
     }
 }
 
-
-
-// register_activation_hook(__FILE__, 'QCWC_woocommerce_plugin_activate');
-
-function QCWC_woocommerce_plugin_activate()
-{
-
-    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443 ? "https://" : "http://";
-    $domain = $protocol . $_SERVER['HTTP_HOST'];
-    global $platform;
-    echo "Platform Name : $platform <br />";
-    $description = "An example wordpress platform for demonstration.";
-    $ip_address = $_SERVER['REMOTE_ADDR'];
-
-    $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/platform/register/');
-    $response = $api_handler->registerPlatForm($platform, $domain, $description, $ip_address);
-
-    var_dump($response);
-}
-
-add_action("wp_footer", "QCWC_woocommerce_plugin_activate");
-
 add_action('wp_ajax_check_api_key', 'QCWC_check_api_key');
 add_action('wp_ajax_nopriv_check_api_key', 'QCWC_check_api_key');
 function QCWC_check_api_key()
 {
     $user_token = get_quick_c_user_token_from_session();
 
-    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443 ? "https://" : "http://";
-    $domain = $protocol . $_SERVER['HTTP_HOST'];
+    // $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443 ? "https://" : "http://";
+    // $domain = $protocol . $_SERVER['HTTP_HOST'];
+    $domain = "saqibdev.com";
     global $platform;
     $email = isset($_GET['email']) ? sanitize_email($_GET['email']) : '';
 
-    $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/platform/api-key/?domain=' . $domain . '&platform=' . $platform . '&user=' . $email . '&token=' . $user_token . '');
-    $response = $api_handler->checkApiKey();
+    $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/platform/api-key/?domain=' . $domain . '&platform=' . $platform . '&user=' . $email . '');
+    $response = $api_handler->checkApiKey($user_token);
 
     // $user_id = get_current_user_id();
     // delete_user_meta($user_id, 'quick-c-user-api-key');
@@ -277,28 +391,59 @@ function QCWC_fetch_user_details()
     $response = $api_handler->getUserDetail($user_token, $email);
 
     if ($response) {
-        update_user_meta($user_id, 'shipping_' . "first_name", $response['data']['first_name']);
-        update_user_meta($user_id, 'shipping_' . "last_name", $response['data']['last_name']);
-        update_user_meta($user_id, 'shipping_' . "postcode", $response['data']['addresses'][0]['postal_code']);
-        update_user_meta($user_id, 'shipping_' . "city", $response['data']['addresses'][0]['city']);
-        update_user_meta($user_id, 'shipping_' . "phone", $response['data']['profile']['primary_contact']);
-        update_user_meta($user_id, 'shipping_' . "address_1", $response['data']['addresses'][0]['short_address']);
-        update_user_meta($user_id, 'shipping_' . "address_2", "");
-
-        update_user_meta($user_id, 'billing_first_name', $response['data']['first_name']);
-        update_user_meta($user_id, 'billing_last_name', $response['data']['last_name']);
-        update_user_meta($user_id, 'billing_postcode', $response['data']['addresses'][0]['postal_code']);
-        update_user_meta($user_id, 'billing_city', $response['data']['addresses'][0]['city']);
-        update_user_meta($user_id, 'billing_phone', $response['data']['profile']['primary_contact']);
-        update_user_meta($user_id, 'billing_address_1', $response['data']['addresses'][0]['short_address']);
-        update_user_meta($user_id, 'billing_address_2', "");
-
         wp_send_json($response);
 
     } else {
         wp_send_json_error('API request failed');
     }
 
+}
+
+add_action('wp_ajax_save_user_detail', 'QCWC_save_user_detail');
+add_action('wp_ajax_nopriv_save_user_detail', 'QCWC_save_user_detail');
+
+function QCWC_save_user_detail()
+{
+    if (!is_user_logged_in()) {
+        wp_send_json_error('User not logged in.');
+        wp_die();
+    }
+
+    $user_id = get_current_user_id();
+
+    $first_name = isset($_POST['first_name']) ? sanitize_text_field($_POST['first_name']) : '';
+    $last_name = isset($_POST['last_name']) ? sanitize_text_field($_POST['last_name']) : '';
+    $phone = isset($_POST['phone']) ? sanitize_text_field($_POST['phone']) : '';
+    $street_address = isset($_POST['street_address']) ? sanitize_text_field($_POST['street_address']) : '';
+    $city = isset($_POST['city']) ? sanitize_text_field($_POST['city']) : '';
+    $postal_code = isset($_POST['postal_code']) ? sanitize_text_field($_POST['postal_code']) : '';
+    $day = sanitize_text_field($_POST['day']);
+    $start_time = sanitize_text_field($_POST['start_time']);
+    $end_time = sanitize_text_field($_POST['end_time']);
+
+    $delivery_preferences = array(
+        'day' => $day,
+        'start_time' => $start_time,
+        'end_time' => $end_time
+    );
+
+    update_user_meta($user_id, 'shipping_first_name', $first_name);
+    update_user_meta($user_id, 'shipping_last_name', $last_name);
+    update_user_meta($user_id, 'shipping_address', $street_address);
+    update_user_meta($user_id, 'shipping_city', $city);
+    update_user_meta($user_id, 'shipping_postcode', $postal_code);
+    update_user_meta($user_id, 'shipping_phone', $phone);
+
+    update_user_meta($user_id, 'billing_first_name', $first_name);
+    update_user_meta($user_id, 'billing_last_name', $last_name);
+    update_user_meta($user_id, 'billing_address', $street_address);
+    update_user_meta($user_id, 'billing_city', $city);
+    update_user_meta($user_id, 'billing_postcode', $postal_code);
+    update_user_meta($user_id, 'billing_phone', $phone);
+    update_user_meta($user_id, 'delivery_preferences', $delivery_preferences);
+
+    wp_send_json_success('Address saved successfully.');
+    wp_die();
 }
 
 add_action('woocommerce_thankyou', 'QCWC_create_order');
@@ -314,7 +459,8 @@ function QCWC_create_order($order_id)
             "order_id" => $order_id,
             "store_name" => "Quick-c",
             "store_image" => "",
-            "current_status" => "pending",
+            "current_status" => "created",
+            "platform_domain" => "saqibdev.com",
             "order_items" => array(),
         );
 
@@ -343,6 +489,16 @@ function QCWC_create_order($order_id)
         $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/order/create/');
         $response = $api_handler->createOrder($user_token, $json_data);
 
+        if ($response) {
+            if (isset($response['data']['id'])) {
+
+                update_post_meta($order_id, 'quick_c_order_id', $response['data']['id']);
+
+
+            }
+            $order->update_status('created');
+        }
+
     }
 
 }
@@ -353,8 +509,9 @@ function QCWC_update_order($order_id)
 {
 
     $order = wc_get_order($order_id);
+    $quick_c_order_meta_id = get_post_meta($order_id, 'quick_c_order_id', true);
 
-    if ($order_id) {
+    if ($order_id && $quick_c_order_meta_id) {
 
 
         $data = array(
@@ -385,7 +542,7 @@ function QCWC_update_order($order_id)
 
         $user_id = get_current_user_id();
         $user_token = get_user_meta($user_id, 'quick-c-user-api-key', true);
-        $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/order/update/' . $order_id . '/');
+        $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/order/update/' . $quick_c_order_meta_id . '/');
         $response = $api_handler->updateOrder($user_token, $json_data);
 
     }
