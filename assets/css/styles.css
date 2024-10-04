@@ -364,3 +364,22 @@
 .edit-address-container button::after {
   display: none !important;
 }
+
+.delivery-preferences-section {
+  background-color: #252525;
+  padding: 20px;
+  border-radius: 8px;
+  margin: 14px 0;
+}
+
+.delivery-preferences-section h3 {
+  color: #fff;
+}
+
+.delivery-preferences-section p strong {
+  font-weight: bold;
+}
+
+.delivery-preferences-section p {
+  color: #fff;
+}

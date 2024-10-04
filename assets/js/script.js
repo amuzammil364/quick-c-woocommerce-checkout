@@ -30,11 +30,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const editAddressButton = document.querySelector("#edit-address-button");
 
-  editAddressButton.addEventListener("click", function () {
-    fetchUserDetails("mhasank999@gmail.com");
-    document.getElementById("QCWC_addressesModal").style.display = "flex";
-    document.body.style.overflow = "hidden";
-  });
+  if (editAddressButton) {
+    editAddressButton.addEventListener("click", function () {
+      fetchUserDetails("mhasank999@gmail.com");
+      document.getElementById("QCWC_addressesModal").style.display = "flex";
+      document.body.style.overflow = "hidden";
+    });
+  }
 
   let isAuthenticated = false;
   let isApiKeyChecked = false;
@@ -180,6 +182,26 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
+  function savePrimaryUserDetail(email) {
+    const data = {
+      action: "save_user_primary_detail",
+      email: email,
+    };
+
+    jQuery.ajax({
+      url: ajaxurl,
+      type: "POST",
+      data: data,
+      success: function (response) {
+        window.location.reload();
+        console.log(response);
+      },
+      error: function () {
+        alert("There was an error with the request.");
+      },
+    });
+  }
+
   let intervalId;
 
   function checkApiKey() {
@@ -200,6 +222,7 @@ document.addEventListener("DOMContentLoaded", () => {
           successMessageText.innerHTML = "";
           isApiKeyChecked = true;
           fetchUserDetails(email.value);
+          savePrimaryUserDetail(email.value);
         } else if (
           response.status_code === 401 ||
           response.status_code === 400

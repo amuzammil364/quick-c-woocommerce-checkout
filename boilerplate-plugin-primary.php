@@ -40,8 +40,6 @@ function QCWC_includes_resources()
 
 
     wp_localize_script('QCWC-script', 'ajaxurl', admin_url('admin-ajax.php'));
-
-
 }
 add_action('wp_enqueue_scripts', 'QCWC_includes_resources');
 
@@ -129,7 +127,6 @@ function QCWC_woocommerce_plugin_activate()
 
     $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/platform/register/');
     $response = $api_handler->registerPlatForm($platform, $domain, $description, $ip_address);
-
 }
 
 function my_custom_add_order_statuses($order_statuses)
@@ -200,7 +197,7 @@ function display_delivery_preferences_checkout($checkout)
         $end_time = isset($delivery_preferences['end_time']) ? $delivery_preferences['end_time'] : '';
 
         // Output the preferences on the checkout page
-        echo '<div id="delivery-preferences-section">';
+        echo '<div class="delivery-preferences-section">';
         echo '<h3> Your Delivery Preferences</h3>';
         echo '<p><strong>' . __('Day:') . '</strong> ' . esc_html($day) . '</p>';
         echo '<p><strong>' . __('Start Time:') . '</strong> ' . esc_html($start_time) . '</p>';
@@ -215,7 +212,7 @@ add_action('woocommerce_before_order_notes', 'display_delivery_preferences_check
 function QCWC_custom_popup_html()
 {
     if (is_checkout()) {
-        ?>
+?>
         <div id="QCWC_loginModal" class="QCWC_loginModal" style="display: none;">
             <div class="QCWC_modal-content">
                 <p class="message"><span class="text"></span><span class="loader"></span></p>
@@ -253,7 +250,7 @@ function QCWC_custom_popup_html()
                 </div>
             </div>
         </div>
-        <?php
+    <?php
     }
 }
 add_action('wp_footer', 'QCWC_custom_popup_html');
@@ -266,7 +263,7 @@ function QCWC_custom_addresses_html()
     $check_user_token = empty($user_token);
 
     if (is_checkout() && $check_user_token !== "1") {
-        ?>
+    ?>
         <div id="QCWC_addressesModal" class="QCWC_addressesModal">
             <div class="QCWC_modal-content">
                 <div class="user-detail-content">
@@ -286,9 +283,8 @@ function QCWC_custom_addresses_html()
                 </div>
             </div>
         </div>
-        <?php
+<?php
     }
-
 }
 
 add_action('wp_footer', 'QCWC_custom_addresses_html');
@@ -392,11 +388,9 @@ function QCWC_fetch_user_details()
 
     if ($response) {
         wp_send_json($response);
-
     } else {
         wp_send_json_error('API request failed');
     }
-
 }
 
 add_action('wp_ajax_save_user_detail', 'QCWC_save_user_detail');
@@ -446,6 +440,75 @@ function QCWC_save_user_detail()
     wp_die();
 }
 
+add_action('wp_ajax_save_user_primary_detail', 'QCWC_save_user_primary_detail');
+add_action('wp_ajax_nopriv_save_user_primary_detail', 'QCWC_save_user_primary_detail');
+
+function QCWC_save_user_primary_detail()
+{
+    $user_id = get_current_user_id();
+    $user_token = get_user_meta($user_id, 'quick-c-user-api-key', true);
+    $email = $_POST['email'];
+
+    $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/user/details/');
+    $response = $api_handler->getUserDetail($user_token, $email);
+
+    if ($response && isset($response['data'])) {
+        $user_data = $response['data'];
+
+        $primary_address = null;
+        if (!empty($user_data['addresses'])) {
+            foreach ($user_data['addresses'] as $address) {
+                if ($address['is_primary']) {
+                    $primary_address = $address;
+                    break;
+                }
+            }
+        }
+
+        $primary_delivery_preference = null;
+        if (!empty($user_data['delivery_preferences'])) {
+            foreach ($user_data['delivery_preferences'] as $preference) {
+                if ($preference['is_primary']) {
+                    $primary_delivery_preference = $preference;
+                    break;
+                }
+            }
+        }
+
+        update_user_meta($user_id, 'shipping_first_name', $user_data['first_name']);
+        update_user_meta($user_id, 'shipping_last_name', $user_data['last_name']);
+        update_user_meta($user_id, 'shipping_phone', $user_data['phone']);
+
+        if ($primary_address) {
+            $street_address = sanitize_text_field($primary_address['street_name']);
+            $city = sanitize_text_field($primary_address['city']);
+            $postal_code = sanitize_text_field($primary_address['postal_code']);
+
+            update_user_meta($user_id, 'shipping_address', $street_address);
+            update_user_meta($user_id, 'shipping_city', $city);
+            update_user_meta($user_id, 'shipping_postcode', $postal_code);
+
+            update_user_meta($user_id, 'billing_address', $street_address);
+            update_user_meta($user_id, 'billing_city', $city);
+            update_user_meta($user_id, 'billing_postcode', $postal_code);
+        }
+
+        if ($primary_delivery_preference) {
+            $delivery_preferences = array(
+                'day' => $primary_delivery_preference['day'] ? $primary_delivery_preference['day'] : "N/A",
+                'start_time' => $primary_delivery_preference['start_time'] ? $primary_delivery_preference['start_time'] : "N/A",
+                'end_time' => $primary_delivery_preference['end_time'] ? $primary_delivery_preference['end_time'] : "N/A"
+            );
+
+            update_user_meta($user_id, 'delivery_preferences', $delivery_preferences);
+        }
+
+        wp_send_json($response);
+    } else {
+        wp_send_json_error('API request failed');
+    }
+}
+
 add_action('woocommerce_thankyou', 'QCWC_create_order');
 
 function QCWC_create_order($order_id)
@@ -493,14 +556,10 @@ function QCWC_create_order($order_id)
             if (isset($response['data']['id'])) {
 
                 update_post_meta($order_id, 'quick_c_order_id', $response['data']['id']);
-
-
             }
             $order->update_status('created');
         }
-
     }
-
 }
 
 add_action('woocommerce_order_status_changed', 'QCWC_update_order', 10, 4);
@@ -544,9 +603,7 @@ function QCWC_update_order($order_id)
         $user_token = get_user_meta($user_id, 'quick-c-user-api-key', true);
         $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/order/update/' . $quick_c_order_meta_id . '/');
         $response = $api_handler->updateOrder($user_token, $json_data);
-
     }
-
 }
 
 ?>
