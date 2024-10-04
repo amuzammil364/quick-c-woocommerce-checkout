@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (editAddressButton) {
     editAddressButton.addEventListener("click", function () {
-      fetchUserDetails("mhasank999@gmail.com");
+      fetchUserDetails(email.value);
       document.getElementById("QCWC_addressesModal").style.display = "flex";
       document.body.style.overflow = "hidden";
     });
@@ -488,6 +488,7 @@ document.addEventListener("DOMContentLoaded", () => {
             errorMessage.innerHTML = "";
             closeModal();
             fetchUserDetails(emailValue);
+            savePrimaryUserDetail(emailValue);
           } else {
             btnLoader.style.display = "none";
             btnText.style.display = "block";

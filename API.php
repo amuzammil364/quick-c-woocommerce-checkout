@@ -133,7 +133,6 @@ class API_Handler
 
         $response_data = json_decode($response, true);
         return $response_data;
-
     }
 
     public function getUserDetail($token, $email)
@@ -163,7 +162,6 @@ class API_Handler
 
         $response_data = json_decode($response, true);
         return $response_data;
-
     }
 
     public function createOrder($api_key, $data)

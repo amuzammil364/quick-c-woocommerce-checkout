@@ -120,7 +120,8 @@ function QCWC_woocommerce_plugin_activate()
 {
 
     // $domain = $_SERVER['HTTP_HOST'];
-    $domain = "saqibdev.com";
+    // echo $domain;
+    $domain = "divistack.com";
     global $platform;
     $description = "An example wordpress platform for demonstration.";
     $ip_address = $_SERVER['REMOTE_ADDR'];
@@ -300,7 +301,8 @@ function QCWC_handle_authentication()
     $email = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
     // $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443 ? "https://" : "http://";
     // $domain = $protocol . $_SERVER['HTTP_HOST'];
-    $domain = "saqibdev.com";
+    // $domain = $_SERVER['HTTP_HOST'];
+    $domain = "divistack.com";
     global $platform;
     $verifyMethod = isset($_POST['verifyMethod']) ? sanitize_text_field($_POST['verifyMethod']) : 'JWT';
 
@@ -347,8 +349,8 @@ function QCWC_check_api_key()
     $user_token = get_quick_c_user_token_from_session();
 
     // $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443 ? "https://" : "http://";
-    // $domain = $protocol . $_SERVER['HTTP_HOST'];
-    $domain = "saqibdev.com";
+    // $domain = $_SERVER['HTTP_HOST'];
+    $domain = "divistack.com";
     global $platform;
     $email = isset($_GET['email']) ? sanitize_email($_GET['email']) : '';
 
@@ -423,14 +425,14 @@ function QCWC_save_user_detail()
 
     update_user_meta($user_id, 'shipping_first_name', $first_name);
     update_user_meta($user_id, 'shipping_last_name', $last_name);
-    update_user_meta($user_id, 'shipping_address', $street_address);
+    update_user_meta($user_id, 'shipping_address_1', $street_address);
     update_user_meta($user_id, 'shipping_city', $city);
     update_user_meta($user_id, 'shipping_postcode', $postal_code);
     update_user_meta($user_id, 'shipping_phone', $phone);
 
     update_user_meta($user_id, 'billing_first_name', $first_name);
     update_user_meta($user_id, 'billing_last_name', $last_name);
-    update_user_meta($user_id, 'billing_address', $street_address);
+    update_user_meta($user_id, 'billing_address_1', $street_address);
     update_user_meta($user_id, 'billing_city', $city);
     update_user_meta($user_id, 'billing_postcode', $postal_code);
     update_user_meta($user_id, 'billing_phone', $phone);
@@ -475,20 +477,16 @@ function QCWC_save_user_primary_detail()
             }
         }
 
-        update_user_meta($user_id, 'shipping_first_name', $user_data['first_name']);
-        update_user_meta($user_id, 'shipping_last_name', $user_data['last_name']);
-        update_user_meta($user_id, 'shipping_phone', $user_data['phone']);
-
         if ($primary_address) {
             $street_address = sanitize_text_field($primary_address['street_name']);
             $city = sanitize_text_field($primary_address['city']);
             $postal_code = sanitize_text_field($primary_address['postal_code']);
 
-            update_user_meta($user_id, 'shipping_address', $street_address);
+            update_user_meta($user_id, 'shipping_address_1', $street_address);
             update_user_meta($user_id, 'shipping_city', $city);
             update_user_meta($user_id, 'shipping_postcode', $postal_code);
 
-            update_user_meta($user_id, 'billing_address', $street_address);
+            update_user_meta($user_id, 'billing_address_1', $street_address);
             update_user_meta($user_id, 'billing_city', $city);
             update_user_meta($user_id, 'billing_postcode', $postal_code);
         }
@@ -502,6 +500,17 @@ function QCWC_save_user_primary_detail()
 
             update_user_meta($user_id, 'delivery_preferences', $delivery_preferences);
         }
+
+        $user_ids = get_current_user_id();
+
+
+        update_user_meta($user_ids, 'shipping_first_name', $user_data['first_name']);
+        update_user_meta($user_id, 'shipping_last_name', $user_data['last_name']);
+        update_user_meta($user_id, 'shipping_phone', $user_data['profile']['primary_contact']);
+
+        update_user_meta($user_ids, 'billing_first_name', $user_data['first_name']);
+        update_user_meta($user_id, 'billing_last_name', $user_data['last_name']);
+        update_user_meta($user_id, 'billing_phone', $user_data['profile']['primary_contact']);
 
         wp_send_json($response);
     } else {
