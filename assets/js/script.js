@@ -22,7 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (typeof popupData !== "undefined" && popupData.isTokenEmpty === "1") {
     document.getElementById("QCWC_loginModal").style.display = "flex";
-    // document.body.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
     document.querySelector(".login-content").style.display = "block";
     document.querySelector(".verification-content").style.display = "none";
     document.querySelector(".otp-content").style.display = "none";

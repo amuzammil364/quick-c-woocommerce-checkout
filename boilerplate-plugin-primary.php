@@ -281,6 +281,7 @@ function custom_billing_fields($checkout)
 
 add_action('woocommerce_after_checkout_billing_form', 'custom_billing_fields');
 
+
 function display_delivery_preferences_checkout($checkout)
 {
     if (is_user_logged_in()) {
