@@ -1,6 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
   console.log("Main Js Loaded!");
-  const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,7}$/;
   let successMessage = document.querySelector(".QCWC_modal-content .message");
   let successMessageText = document.querySelector(
     ".QCWC_modal-content .message .text"
@@ -18,11 +17,12 @@ document.addEventListener("DOMContentLoaded", () => {
   let user_delivery_prefences_loader = document.querySelector(
     ".user-delivery-prefences-loader"
   );
+  let quick_c_logout_btn = document.getElementById("quick-c-logout-btn");
   email.value = popupData.userEmail;
 
   if (typeof popupData !== "undefined" && popupData.isTokenEmpty === "1") {
     document.getElementById("QCWC_loginModal").style.display = "flex";
-    document.body.style.overflow = "hidden";
+    // document.body.style.overflow = "hidden";
     document.querySelector(".login-content").style.display = "block";
     document.querySelector(".verification-content").style.display = "none";
     document.querySelector(".otp-content").style.display = "none";
@@ -38,6 +38,38 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  const QCWC_addressesModal_close_btn = document.querySelector(
+    ".QCWC_addressesModal_close_btn"
+  );
+
+  if (QCWC_addressesModal_close_btn) {
+    QCWC_addressesModal_close_btn.addEventListener("click", function () {
+      document.getElementById("QCWC_addressesModal").style.display = "none";
+      document.body.style.overflow = "auto";
+    });
+  }
+
+  const QCWC_prefencesModal_close_btn = document.querySelector(
+    ".QCWC_prefencesModal_close_btn"
+  );
+
+  if (QCWC_prefencesModal_close_btn) {
+    QCWC_prefencesModal_close_btn.addEventListener("click", function () {
+      document.getElementById("QCWC_prefencesModal").style.display = "none";
+      document.body.style.overflow = "auto";
+    });
+  }
+
+  const editPrefencesButton = document.querySelector("#edit-prefences-button");
+
+  if (editPrefencesButton) {
+    editPrefencesButton.addEventListener("click", function () {
+      fetchUserDetails(email.value);
+      document.getElementById("QCWC_prefencesModal").style.display = "flex";
+      document.body.style.overflow = "hidden";
+    });
+  }
+
   let isAuthenticated = false;
   let isApiKeyChecked = false;
 
@@ -49,6 +81,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function closeAddressesModal() {
     const modal = document.getElementById("QCWC_addressesModal");
+    modal.style.display = "none";
+    document.body.style.overflow = "auto";
+  }
+
+  function closePrefencesModal() {
+    const modal = document.getElementById("QCWC_prefencesModal");
     modal.style.display = "none";
     document.body.style.overflow = "auto";
   }
@@ -69,30 +107,88 @@ document.addEventListener("DOMContentLoaded", () => {
         let userDeliveryPrefencesHtml = "";
 
         if (userDetail) {
+          user_addresses.innerHTML = "";
+          user_delivery_prefences_list.innerHTML = "";
+
           userDetail.addresses.forEach((address) => {
             userAddressesHtml += `
             <div class="address">
               <label class="custom-radio">
-                <input type="radio" name="user_address" value="${
-                  address.id
-                }" data-street_address="${address.short_address}" data-city="${
-              address.city
-            }" data-postal_code="${address.postal_code}" ${
-              address.is_primary ? "checked" : ""
-            } />
+                <input type="radio" name="user_address" value="${address.id}"
+                data-latitude="${
+                  address.latitude && address.latitude !== null
+                    ? address.latitude
+                    : ""
+                }"
+                data-longitude="${
+                  address.longitude && address.longitude !== null
+                    ? address.longitude
+                    : ""
+                }"
+                data-unit_number="${
+                  address.unit_number && address.unit_number !== null
+                    ? address.unit_number
+                    : ""
+                }"
+                data-district="${
+                  address.district && address.district !== null
+                    ? address.district
+                    : ""
+                }"
+                data-street_name="${
+                  address.street_name && address.street_name !== null
+                    ? address.street_name
+                    : ""
+                }"
+                data-building_number="${
+                  address.building_number && address.building_number !== null
+                    ? address.building_number
+                    : ""
+                }"
+                data-region="${
+                  address.region && address.region !== null
+                    ? address.region
+                    : ""
+                }" data-short_address="${
+              address.short_address && address.short_address !== null
+                ? address.short_address
+                : ""
+            }" data-primary_address="${
+              address.primary_address && address.primary_address !== null
+                ? address.primary_address
+                : ""
+            }" data-secondary_address="${
+              address.secondary && address.secondary !== null
+                ? address.secondary
+                : ""
+            }" data-city="${address.city}" data-postal_code="${
+              address.postal_code
+            }" ${address.is_primary ? "checked" : ""} />
              <span class="radio-custom"></span>
-                ${address.street_name}, ${address.city}, ${address.postal_code}
+                ${
+                  address.primary_address && address.primary_address !== null
+                    ? address.primary_address
+                    : ""
+                }
+                ${
+                  address.secondary && address.secondary !== null
+                    ? address.secondary
+                    : ""
+                }
+                , ${address.city}, ${address.postal_code}
               </label>
               </div>
             `;
           });
           userDetail.delivery_preferences.forEach((userDelivery) => {
-            const startTime = userDelivery.start_time
-              ? userDelivery.start_time
-              : "N/A";
-            const endTime = userDelivery.end_time
-              ? userDelivery.end_time
-              : "N/A";
+            const startTime =
+              userDelivery.start_time && userDelivery.start_time !== null
+                ? userDelivery.start_time
+                : "";
+            const endTime =
+              userDelivery.end_time && userDelivery.end_time !== null
+                ? userDelivery.end_time
+                : "";
             userDeliveryPrefencesHtml += `
             <div class="preference">
               <label class="custom-radio">
@@ -104,7 +200,13 @@ document.addEventListener("DOMContentLoaded", () => {
               userDelivery.is_primary ? "checked" : ""
             } />
                 <span class="radio-custom"></span>
-                <span>${userDelivery.day} ( ${startTime} - ${endTime} )</span>
+                <span>${
+                  userDelivery.day && userDelivery.day !== null
+                    ? userDelivery.day
+                    : ""
+                } ( ${
+              startTime ? startTime + " -" : startTime
+            } ${endTime} )</span>
               </label>
             </div>
             `;
@@ -130,31 +232,56 @@ document.addEventListener("DOMContentLoaded", () => {
       const selectedAddress = document.querySelector(
         'input[name="user_address"]:checked'
       );
-      const selectedPrefence = document.querySelector(
-        'input[name="delivery_preference"]:checked'
-      );
+      // const selectedPrefence = document.querySelector(
+      //   'input[name="delivery_preference"]:checked'
+      // );
 
       const btnLoader = document.querySelector(".confirm-btn-loader");
       const btnText = document.querySelector(".confirm-btn-text");
-      const streetAddress = selectedAddress.getAttribute("data-street_address");
+      const primaryAddress = selectedAddress.getAttribute(
+        "data-primary_address"
+      );
+      const secondaryAddress = selectedAddress.getAttribute(
+        "data-secondary_address"
+      );
+      const billingShortAddress =
+        selectedAddress.getAttribute("data-short_address");
+      const buildingNumber = selectedAddress.getAttribute(
+        "data-building_number"
+      );
+      const streetName = selectedAddress.getAttribute("data-street_name");
+      const district = selectedAddress.getAttribute("data-district");
+      const unit_number = selectedAddress.getAttribute("data-unit_number");
+      const region = selectedAddress.getAttribute("data-region");
+      const latitude = selectedAddress.getAttribute("data-latitude");
+      const longitude = selectedAddress.getAttribute("data-longitude");
       const city = selectedAddress.getAttribute("data-city");
       const postalCode = selectedAddress.getAttribute("data-postal_code");
 
-      const day = selectedPrefence.getAttribute("data-day");
-      const start_time = selectedPrefence.getAttribute("data-start_time");
-      const end_time = selectedPrefence.getAttribute("data-end_time");
+      // const day = selectedPrefence.getAttribute("data-day");
+      // const start_time = selectedPrefence.getAttribute("data-start_time");
+      // const end_time = selectedPrefence.getAttribute("data-end_time");
 
       const data = {
         action: "save_user_detail",
         first_name: userDetail?.first_name,
         last_name: userDetail?.last_name,
         phone: userDetail.profile.primary_contact,
-        street_address: streetAddress,
+        primary_address: primaryAddress,
+        secondary_address: secondaryAddress,
+        billing_short_address: billingShortAddress,
+        building_number: buildingNumber,
+        street_name: streetName,
+        district: district,
+        unit_number: unit_number,
+        region: region,
+        latitude: latitude,
+        longitude: longitude,
         city: city,
         postal_code: postalCode,
-        day: day,
-        start_time: start_time,
-        end_time: end_time,
+        // day: day,
+        // start_time: start_time,
+        // end_time: end_time,
       };
 
       if (selectedAddress) {
@@ -182,6 +309,55 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
+  document
+    .getElementById("confirmPrefenceButton")
+    .addEventListener("click", function () {
+      const selectedPrefence = document.querySelector(
+        'input[name="delivery_preference"]:checked'
+      );
+
+      const btnLoader1 = document.querySelector(".confirm-btn-loader1");
+      const btnText1 = document.querySelector(".confirm-btn-text1");
+
+      const day = selectedPrefence.getAttribute("data-day");
+      const start_time = selectedPrefence.getAttribute("data-start_time");
+      const end_time = selectedPrefence.getAttribute("data-end_time");
+
+      const data = {
+        action: "save_user_delivery_prefence_detail",
+        day: day,
+        start_time: start_time,
+        end_time: end_time,
+      };
+
+      if (selectedPrefence) {
+        btnLoader1.style.display = "block";
+        btnText1.style.display = "none";
+        document.querySelector(".prefence-detail-content").style.opacity =
+          "0.6";
+        jQuery.ajax({
+          url: ajaxurl,
+          type: "POST",
+          data: data,
+          success: function (response) {
+            btnLoader1.style.display = "none";
+            btnText1.style.display = "block";
+            document.querySelector(".prefence-detail-content").style.opacity =
+              "1";
+            closePrefencesModal();
+            window.location.reload();
+          },
+          error: function () {
+            alert("There was an error with the request.");
+            btnLoader1.style.display = "none";
+            btnText1.style.display = "block";
+            document.querySelector(".prefence-detail-content").style.opacity =
+              "1";
+          },
+        });
+      }
+    });
+
   function savePrimaryUserDetail(email) {
     const data = {
       action: "save_user_primary_detail",
@@ -193,8 +369,7 @@ document.addEventListener("DOMContentLoaded", () => {
       type: "POST",
       data: data,
       success: function (response) {
-        window.location.reload();
-        console.log(response);
+        window.location.reload(true);
       },
       error: function () {
         alert("There was an error with the request.");
@@ -268,10 +443,6 @@ document.addEventListener("DOMContentLoaded", () => {
       email.style.borderColor = "red";
       errorText1.classList.add("active");
       errorText1.innerHTML = "Please input your email!";
-    } else if (!emailPattern.test(email.value)) {
-      email.style.borderColor = "red";
-      errorText1.classList.add("active");
-      errorText1.innerHTML = "Please input your valid email!";
     } else {
       email.style.borderColor = "#dfe2e8";
       errorText1.classList.remove("active");
@@ -283,7 +454,7 @@ document.addEventListener("DOMContentLoaded", () => {
       email: email.value,
     };
 
-    if (email.value && email.value !== "" && emailPattern.test(email.value)) {
+    if (email.value && email.value !== "") {
       document.querySelector(".login-content").style.pointerEvents = "none";
       document.querySelector(".login-content").style.opacity = "0.6";
       btnLoader.style.display = "block";
@@ -507,5 +678,34 @@ document.addEventListener("DOMContentLoaded", () => {
         },
       });
     }
+  });
+
+  quick_c_logout_btn.addEventListener("click", () => {
+    const btnLoader = quick_c_logout_btn.querySelector(".btn-loader");
+    const btnText = quick_c_logout_btn.querySelector(".btn-text");
+
+    btnLoader.style.display = "block";
+    btnText.style.display = "none";
+
+    const data = {
+      action: "logout_quick_c",
+    };
+
+    jQuery.ajax({
+      url: ajaxurl,
+      data: data,
+      type: "POST",
+      success: function (response) {
+        window.location.reload(true);
+        btnLoader.style.display = "none";
+        btnText.style.display = "block";
+        closeAddressesModal();
+      },
+      error: function () {
+        alert("There was an error with the request.");
+        btnLoader.style.display = "none";
+        btnText.style.display = "block";
+      },
+    });
   });
 });

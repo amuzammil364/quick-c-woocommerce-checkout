@@ -28,6 +28,53 @@
   font-family: "Poppins", sans-serif;
 }
 
+.QCWC_addressesModal .close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 36px;
+  height: 35px;
+  background-color: #ddddddc4;
+  color: #000;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.QCWC_prefencesModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 100000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  font-family: "Poppins", sans-serif;
+}
+
+.QCWC_prefencesModal .close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 36px;
+  height: 35px;
+  background-color: #ddddddc4;
+  color: #000;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
 .QCWC_loginModal img {
   width: 60px;
   height: 60px;
@@ -36,6 +83,13 @@
 }
 
 .QCWC_addressesModal img {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  margin-bottom: 16px;
+}
+
+.QCWC_prefencesModal img {
   width: 60px;
   height: 60px;
   border-radius: 50%;
@@ -55,7 +109,18 @@
   max-width: 480px;
   width: 100%;
   padding: 30px;
+  padding-top: 66px;
   border-radius: 10px;
+  position: relative;
+}
+
+.QCWC_prefencesModal .QCWC_modal-content {
+  background-color: #fff;
+  max-width: 480px;
+  width: 100%;
+  padding: 30px;
+  border-radius: 10px;
+  position: relative;
 }
 
 .QCWC_loginModal .QCWC_modal-content .message {
@@ -120,6 +185,11 @@
 }
 
 .QCWC_addressesModal h2 {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.QCWC_prefencesModal h2 {
   font-size: 24px;
   font-weight: 700;
 }
@@ -209,8 +279,22 @@
   cursor: pointer;
 }
 
+.QCWC_prefencesModal .QCWC_modal-content button {
+  background-color: #252525;
+  color: #fff;
+  border: 1px solid #252525;
+  padding: 12px 0;
+  border-radius: 50px;
+  margin-top: 32px;
+  font-size: 16px;
+  font-weight: 600;
+  width: 100%;
+  cursor: pointer;
+}
+
 .QCWC_loginModal .QCWC_modal-content button .btn-loader,
-.QCWC_addressesModal .QCWC_modal-content button .btn-loader {
+.QCWC_addressesModal .QCWC_modal-content button .btn-loader,
+.QCWC_prefencesModal .QCWC_modal-content button .btn-loader {
   display: inline-block;
   width: 23px;
   height: 23px;
@@ -233,10 +317,6 @@
   width: 100%;
 }
 
-.QCWC_addressesModal .QCWC_modal-content .user-detail-content .user-address {
-  margin-bottom: 30px;
-}
-
 .QCWC_addressesModal
   .QCWC_modal-content
   .user-detail-content
@@ -253,7 +333,7 @@
   display: block;
 }
 
-.QCWC_addressesModal
+.QCWC_prefencesModal
   .QCWC_modal-content
   .user-detail-content
   .user-delivery-prefences
@@ -284,6 +364,27 @@
 }
 
 .QCWC_addressesModal
+  .QCWC_modal-content
+  .user-detail-content
+  .user-detail-content-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.QCWC_addressesModal
+  .QCWC_modal-content
+  .user-detail-content
+  .user-detail-content-header
+  button {
+  width: auto !important;
+  margin-top: 0;
+  font-size: 14px;
+  padding: 10px 20px;
+  border-radius: 6px;
+}
+
+.QCWC_prefencesModal
   .QCWC_modal-content
   .user-detail-content
   .user-delivery-prefences-list {
@@ -362,6 +463,25 @@
 }
 
 .edit-address-container button::after {
+  display: none !important;
+}
+
+.edit-prefences-container {
+  margin: 20px 0;
+}
+
+.edit-prefences-container button {
+  background-color: #252525 !important;
+  color: #fff !important;
+  border: 1px solid #252525 !important;
+  padding: 12px 30px !important;
+  border-radius: 10px !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+}
+
+.edit-prefences-container button::after {
   display: none !important;
 }
 
