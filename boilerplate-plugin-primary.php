@@ -119,15 +119,28 @@ register_activation_hook(__FILE__, function () {
 function QCWC_woocommerce_plugin_activate()
 {
 
-    // $domain = $_SERVER['HTTP_HOST'];
-    // echo $domain;
-    $domain = "divistack.com";
+    $domain = $_SERVER['HTTP_HOST'];
+    $root_domain = get_root_domain($domain);
+
     global $platform;
     $description = "An example wordpress platform for demonstration.";
     $ip_address = $_SERVER['REMOTE_ADDR'];
 
     $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/platform/register/');
-    $response = $api_handler->registerPlatForm($platform, $domain, $description, $ip_address);
+    $response = $api_handler->registerPlatForm($platform, $root_domain, $description, $ip_address);
+
+}
+
+function get_root_domain($domain)
+{
+    $parts = explode('.', $domain);
+    $num_parts = count($parts);
+
+    if ($num_parts > 2) {
+        return $parts[$num_parts - 2] . '.' . $parts[$num_parts - 1];
+    }
+
+    return $domain;
 }
 
 function my_custom_add_order_statuses($order_statuses)
@@ -317,10 +330,10 @@ add_action('woocommerce_before_order_notes', 'display_delivery_preferences_check
 function QCWC_custom_popup_html()
 {
     if (is_checkout()) {
-?>
+        ?>
         <div id="QCWC_loginModal" class="QCWC_loginModal" style="display: none;">
             <div class="QCWC_modal-content">
-                <p class="message"><span class="text"></span><span class="loader"></span></p>
+                <p class="message"><span class="text"></span><span class="qcwc_loader"></span></p>
                 <p class="error-message"></p>
                 <div class="login-content">
                     <img src="<?php echo plugins_url('assets/images/icon-logo.png', __FILE__); ?>" />
@@ -355,7 +368,7 @@ function QCWC_custom_popup_html()
                 </div>
             </div>
         </div>
-    <?php
+        <?php
     }
 }
 add_action('wp_footer', 'QCWC_custom_popup_html');
@@ -368,9 +381,10 @@ function QCWC_custom_addresses_html()
     $check_user_token = empty($user_token);
 
     if (is_checkout() && $check_user_token !== "1") {
-    ?>
+        ?>
         <div id="QCWC_addressesModal" class="QCWC_addressesModal">
             <div class="QCWC_modal-content">
+                <p class="error-message error-message1"></p>
                 <div class="close-btn QCWC_addressesModal_close_btn">
                     &times;
                 </div>
@@ -394,7 +408,7 @@ function QCWC_custom_addresses_html()
                 </div>
             </div>
         </div>
-    <?php
+        <?php
     }
 }
 
@@ -409,9 +423,10 @@ function QCWC_custom_delivery_prefences_html()
     $check_user_token = empty($user_token);
 
     if (is_checkout() && $check_user_token !== "1") {
-    ?>
+        ?>
         <div id="QCWC_prefencesModal" class="QCWC_prefencesModal">
             <div class="QCWC_modal-content">
+                <p class="error-message error-message2"></p>
                 <div class="close-btn QCWC_prefencesModal_close_btn">
                     &times;
                 </div>
@@ -429,7 +444,7 @@ function QCWC_custom_delivery_prefences_html()
                 </div>
             </div>
         </div>
-<?php
+        <?php
     }
 }
 
@@ -448,12 +463,13 @@ function QCWC_handle_authentication()
     // $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443 ? "https://" : "http://";
     // $domain = $protocol . $_SERVER['HTTP_HOST'];
     // $domain = $_SERVER['HTTP_HOST'];
-    $domain = "divistack.com";
+    $domain = $_SERVER['HTTP_HOST'];
+    $root_domain = get_root_domain($domain);
     global $platform;
     $verifyMethod = isset($_POST['verifyMethod']) ? sanitize_text_field($_POST['verifyMethod']) : 'JWT';
 
     $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/platform/login-by-portal/');
-    $response = $api_handler->authenticate($email, $domain, $platform, $verifyMethod);
+    $response = $api_handler->authenticate($email, $root_domain, $platform, $verifyMethod);
 
     if ($response) {
         $_SESSION['quick_c_user_token'] = $response['data']['token'];
@@ -496,11 +512,12 @@ function QCWC_check_api_key()
 
     // $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443 ? "https://" : "http://";
     // $domain = $_SERVER['HTTP_HOST'];
-    $domain = "divistack.com";
+    $domain = $_SERVER['HTTP_HOST'];
+    $root_domain = get_root_domain($domain);
     global $platform;
     $email = isset($_GET['email']) ? sanitize_text_field($_GET['email']) : '';
 
-    $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/platform/api-key/?domain=' . $domain . '&platform=' . $platform . '&user=' . $email . '');
+    $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/platform/api-key/?domain=' . $root_domain . '&platform=' . $platform . '&user=' . $email . '');
     $response = $api_handler->checkApiKey($user_token);
 
     // $user_id = get_current_user_id();

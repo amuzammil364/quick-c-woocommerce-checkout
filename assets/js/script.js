@@ -7,6 +7,12 @@ document.addEventListener("DOMContentLoaded", () => {
   let errorMessage = document.querySelector(
     ".QCWC_modal-content .error-message"
   );
+  let errorMessage1 = document.querySelector(
+    ".QCWC_modal-content .error-message1"
+  );
+  let errorMessage2 = document.querySelector(
+    ".QCWC_modal-content .error-message2"
+  );
   let email = document.getElementById("userEmail");
   let user_addresses = document.querySelector(".user-addresses");
   let user_delivery_prefences_list = document.querySelector(
@@ -215,9 +221,20 @@ document.addEventListener("DOMContentLoaded", () => {
           user_delivery_prefences_list.innerHTML += userDeliveryPrefencesHtml;
           user_address_loader.style.display = "none";
           user_delivery_prefences_loader.style.display = "none";
+          errorMessage1.classList.remove("active");
+          errorMessage1.innerHTML = "";
+          errorMessage2.classList.remove("active");
+          errorMessage2.innerHTML = "";
         } else {
-          user_address_loader.style.display = "block";
-          user_delivery_prefences_loader.style.display = "block";
+          user_address_loader.style.display = "none";
+          user_delivery_prefences_loader.style.display = "none";
+          errorMessage1.classList.add("active");
+          errorMessage1.innerHTML =
+            response.errors.detail + " Waiting Logout...";
+          errorMessage2.classList.add("active");
+          errorMessage2.innerHTML =
+            response.errors.detail + " Waiting Logout...";
+          quick_c_logout_btn.click();
         }
       },
       error: function () {
