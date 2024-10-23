@@ -507,3 +507,68 @@
 .delivery-preferences-section p {
   color: #fff;
 }
+
+.cart_totals .wc-proceed-to-checkout {
+  padding-bottom: 0 !important;
+}
+
+.cart_totals .wc-proceed-to-checkout a {
+  margin-bottom: 0 !important;
+  width: 100%;
+  display: inline-block;
+  text-align: center;
+  background-color: #252525 !important;
+  color: #fff !important;
+  border: 1px solid #252525 !important;
+  padding: 14px 30px !important;
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+}
+
+.cart_totals .wc-proceed-to-checkout a::after {
+  display: none !important;
+}
+
+.qcwc-cart-button {
+  width: 100%;
+  display: inline-block;
+  text-align: center;
+  background-color: #252525 !important;
+  color: #fff !important;
+  border: 1px solid #252525 !important;
+  padding: 14px 30px !important;
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+}
+
+.qcwc-cart-button::after {
+  display: none !important;
+}
+
+.shop_table .product-name a {
+  color: #252525;
+}
+
+button[name="apply_coupon"],
+button[name="update_cart"],
+button[name="calc_shipping"] {
+  background-color: #252525 !important;
+  color: #fff !important;
+  border: 1px solid #252525 !important;
+  padding: 14px 30px !important;
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+}
+
+button[name="apply_coupon"]:hover::after,
+button[name="update_cart"]:hover::after,
+button[name="calc_shipping"]:hover::after {
+  display: none !important;
+}
+
+.shipping-calculator-button {
+  color: #252525;
+}

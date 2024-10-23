@@ -76,6 +76,119 @@ function start_session()
     }
 }
 
+function qcwc_register_settings()
+{
+    register_setting('qcwc_settings_group', 'qcwc_enable_short_address');
+    register_setting('qcwc_settings_group', 'qcwc_enable_region');
+    register_setting('qcwc_settings_group', 'qcwc_enable_unit_number');
+    register_setting('qcwc_settings_group', 'qcwc_enable_building_number');
+    register_setting('qcwc_settings_group', 'qcwc_enable_street_name');
+    register_setting('qcwc_settings_group', 'qcwc_enable_district');
+    register_setting('qcwc_settings_group', 'qcwc_enable_lat');
+    register_setting('qcwc_settings_group', 'qcwc_enable_long');
+
+    add_settings_section(
+        'qcwc_settings_section',
+        'Billing Fields',
+        null,
+        'qcwc_settings_page'
+    );
+
+    // Add individual fields
+    add_settings_field(
+        'qcwc_enable_short_address',
+        'Enable Short Address',
+        'qcwc_display_checkbox',
+        'qcwc_settings_page',
+        'qcwc_settings_section',
+        array('field' => 'qcwc_enable_short_address')
+    );
+
+    add_settings_field('qcwc_enable_region', 'Enable Region', 'qcwc_display_checkbox', 'qcwc_settings_page', 'qcwc_settings_section', array('field' => 'qcwc_enable_region'));
+    add_settings_field('qcwc_enable_unit_number', 'Enable Unit Number', 'qcwc_display_checkbox', 'qcwc_settings_page', 'qcwc_settings_section', array('field' => 'qcwc_enable_unit_number'));
+    add_settings_field('qcwc_enable_building_number', 'Enable Building Number', 'qcwc_display_checkbox', 'qcwc_settings_page', 'qcwc_settings_section', array('field' => 'qcwc_enable_building_number'));
+    add_settings_field('qcwc_enable_street_name', 'Enable Street Name', 'qcwc_display_checkbox', 'qcwc_settings_page', 'qcwc_settings_section', array('field' => 'qcwc_enable_street_name'));
+    add_settings_field('qcwc_enable_district', 'Enable District', 'qcwc_display_checkbox', 'qcwc_settings_page', 'qcwc_settings_section', array('field' => 'qcwc_enable_district'));
+    add_settings_field('qcwc_enable_lat', 'Enable Latitude', 'qcwc_display_checkbox', 'qcwc_settings_page', 'qcwc_settings_section', array('field' => 'qcwc_enable_lat'));
+    add_settings_field('qcwc_enable_long', 'Enable Longitude', 'qcwc_display_checkbox', 'qcwc_settings_page', 'qcwc_settings_section', array('field' => 'qcwc_enable_long'));
+}
+
+add_action('admin_init', 'qcwc_register_settings');
+
+function qcwc_display_checkbox($args)
+{
+    $field = $args['field'];
+    $value = get_option($field) ? 'checked' : '';
+    echo "<input type='checkbox' name='$field' value='1' $value>";
+}
+
+add_action('admin_menu', 'qcwc_add_admin_menu');
+
+function qcwc_add_admin_menu()
+{
+    add_menu_page(
+        'Quick C Admin Tab',
+        'Quick C',
+        'manage_options',
+        'qcwc-admin-tab',
+        'qcwc-settings',
+        'dashicons-admin-generic',
+        50
+    );
+
+    add_submenu_page(
+        'qcwc-admin-tab',
+        'Settings Page',
+        'Settings',
+        'manage_options',
+        'qcwc-settings',
+        'qcwc_settings_page_content'
+    );
+
+    add_action('admin_init', 'qcwc_redirect_main_tab_to_settings');
+}
+
+function qcwc_settings_page_content()
+{
+    ?>
+    <div class="wrap">
+        <h1>Quick C Settings</h1>
+        <?php
+        settings_errors();
+        ?>
+        <form method="post" action="options.php">
+            <?php
+            settings_fields('qcwc_settings_group');
+            do_settings_sections('qcwc_settings_page');
+            submit_button();
+            ?>
+        </form>
+    </div>
+    <?php
+}
+
+
+function qcwc_redirect_main_tab_to_settings()
+{
+    global $pagenow;
+
+    if (isset($_GET['page']) && $_GET['page'] === 'qcwc-admin-tab') {
+        wp_redirect(admin_url('admin.php?page=qcwc-settings'));
+        exit;
+    }
+}
+
+add_action('admin_head', 'qcwc_hide_parent_submenu_item');
+
+function qcwc_hide_parent_submenu_item()
+{
+    echo '<style>
+        #toplevel_page_qcwc-admin-tab .wp-submenu li.wp-first-item {
+            display: none;
+        }
+    </style>';
+}
+
 // Function to register custom order statuses
 function my_custom_register_order_statuses()
 {
@@ -181,9 +294,12 @@ function QCWC_custom_checkout_popup()
 
         wp_localize_script('QCWC-script', 'popupData', array(
             'isTokenEmpty' => empty($user_token),
-            'userEmail' => wp_get_current_user()->user_email,
+            // 'userEmail' => wp_get_current_user()->user_email,
+            'userEmail' => "admin@divistack.com",
+            'quick_c_checkout' => isset($_GET['quick-c-checkout']) && $_GET['quick-c-checkout'] === 'true', // Check for string 'true'
         ));
     }
+
 }
 add_action('wp_enqueue_scripts', 'QCWC_custom_checkout_popup');
 
@@ -191,7 +307,7 @@ add_action('wp_enqueue_scripts', 'QCWC_custom_checkout_popup');
 
 function add_custom_button_checkout()
 {
-    if (is_user_logged_in()) {
+    if (is_user_logged_in() && (isset($_GET['quick-c-checkout']) && $_GET['quick-c-checkout'] === 'true')) {
         echo '<div class="edit-address-container">';
         echo '<button id="edit-address-button" type="button" class="button">Edit Address</button>';
         echo '</div>';
@@ -203,101 +319,130 @@ add_action('woocommerce_before_checkout_billing_form', 'add_custom_button_checko
 function custom_billing_fields($checkout)
 {
 
-    woocommerce_form_field(
-        'billing_short_address',
-        array(
-            'type' => 'text',
-            'class' => array('form-row-wide'),
-            'label' => __('Short Address'),
-            'placeholder' => __('Enter short address'),
-        ),
-        $checkout->get_value('billing_short_address')
-    );
+    // Check if each field is enabled in settings and display accordingly
 
-    woocommerce_form_field(
-        'billing_region',
-        array(
-            'type' => 'text',
-            'class' => array('form-row-wide'),
-            'label' => __('Region (State/County)'),
-            'placeholder' => __('Enter region'),
-        ),
-        $checkout->get_value('billing_region')
-    );
+    if (get_option('qcwc_enable_short_address') && (isset($_GET['quick-c-checkout']) && $_GET['quick-c-checkout'] === 'true')) {
+        woocommerce_form_field(
+            'billing_short_address',
+            array(
+                'type' => 'text',
+                'class' => array('form-row-wide'),
+                'label' => __('Short Address'),
+                'placeholder' => __('Enter short address'),
+            ),
+            $checkout->get_value('billing_short_address')
+        );
+    }
 
-    woocommerce_form_field(
-        'billing_unit_number',
-        array(
-            'type' => 'text',
-            'class' => array('form-row-wide'),
-            'label' => __('Unit Number'),
-            'placeholder' => __('Enter unit number'),
-        ),
-        $checkout->get_value('billing_unit_number')
-    );
+    if (get_option('qcwc_enable_region') && (isset($_GET['quick-c-checkout']) && $_GET['quick-c-checkout'] === 'true')) {
+        woocommerce_form_field(
+            'billing_region',
+            array(
+                'type' => 'text',
+                'class' => array('form-row-wide'),
+                'label' => __('Region (State/County)'),
+                'placeholder' => __('Enter region'),
+            ),
+            $checkout->get_value('billing_region')
+        );
+    }
 
-    woocommerce_form_field(
-        'billing_building_number',
-        array(
-            'type' => 'text',
-            'class' => array('form-row-wide'),
-            'label' => __('Building Number'),
-            'placeholder' => __('Enter building number'),
-        ),
-        $checkout->get_value('billing_building_number')
-    );
+    if (get_option('qcwc_enable_unit_number') && (isset($_GET['quick-c-checkout']) && $_GET['quick-c-checkout'] === 'true')) {
+        woocommerce_form_field(
+            'billing_unit_number',
+            array(
+                'type' => 'text',
+                'class' => array('form-row-wide'),
+                'label' => __('Unit Number'),
+                'placeholder' => __('Enter unit number'),
+            ),
+            $checkout->get_value('billing_unit_number')
+        );
+    }
 
-    woocommerce_form_field(
-        'billing_street_name',
-        array(
-            'type' => 'text',
-            'class' => array('form-row-wide'),
-            'label' => __('Street Name'),
-            'placeholder' => __('Enter street name'),
-        ),
-        $checkout->get_value('billing_street_name')
-    );
+    if (get_option('qcwc_enable_building_number') && (isset($_GET['quick-c-checkout']) && $_GET['quick-c-checkout'] === 'true')) {
+        woocommerce_form_field(
+            'billing_building_number',
+            array(
+                'type' => 'text',
+                'class' => array('form-row-wide'),
+                'label' => __('Building Number'),
+                'placeholder' => __('Enter building number'),
+            ),
+            $checkout->get_value('billing_building_number')
+        );
+    }
 
-    woocommerce_form_field(
-        'billing_district',
-        array(
-            'type' => 'text',
-            'class' => array('form-row-wide'),
-            'label' => __('District'),
-            'placeholder' => __('Enter district'),
-        ),
-        $checkout->get_value('billing_district')
-    );
+    if (get_option('qcwc_enable_street_name') && (isset($_GET['quick-c-checkout']) && $_GET['quick-c-checkout'] === 'true')) {
+        woocommerce_form_field(
+            'billing_street_name',
+            array(
+                'type' => 'text',
+                'class' => array('form-row-wide'),
+                'label' => __('Street Name'),
+                'placeholder' => __('Enter street name'),
+            ),
+            $checkout->get_value('billing_street_name')
+        );
+    }
 
-    woocommerce_form_field(
-        'billing_lat',
-        array(
-            'type' => 'text',
-            'class' => array('form-row-wide'),
-            'label' => __('Latitude'),
-            'placeholder' => __('Enter latitude'),
-        ),
-        $checkout->get_value('billing_lat')
-    );
+    if (get_option('qcwc_enable_district') && (isset($_GET['quick-c-checkout']) && $_GET['quick-c-checkout'] === 'true')) {
+        woocommerce_form_field(
+            'billing_district',
+            array(
+                'type' => 'text',
+                'class' => array('form-row-wide'),
+                'label' => __('District'),
+                'placeholder' => __('Enter district'),
+            ),
+            $checkout->get_value('billing_district')
+        );
+    }
 
-    woocommerce_form_field(
-        'billing_long',
-        array(
-            'type' => 'text',
-            'class' => array('form-row-wide'),
-            'label' => __('Longitude'),
-            'placeholder' => __('Enter longitude'),
-        ),
-        $checkout->get_value('billing_long')
-    );
+    if (get_option('qcwc_enable_lat') && (isset($_GET['quick-c-checkout']) && $_GET['quick-c-checkout'] === 'true')) {
+        woocommerce_form_field(
+            'billing_lat',
+            array(
+                'type' => 'text',
+                'class' => array('form-row-wide'),
+                'label' => __('Latitude'),
+                'placeholder' => __('Enter latitude'),
+            ),
+            $checkout->get_value('billing_lat')
+        );
+    }
+
+    if (get_option('qcwc_enable_long') && (isset($_GET['quick-c-checkout']) && $_GET['quick-c-checkout'] === 'true')) {
+        woocommerce_form_field(
+            'billing_long',
+            array(
+                'type' => 'text',
+                'class' => array('form-row-wide'),
+                'label' => __('Longitude'),
+                'placeholder' => __('Enter longitude'),
+            ),
+            $checkout->get_value('billing_long')
+        );
+    }
 }
 
 add_action('woocommerce_after_checkout_billing_form', 'custom_billing_fields');
 
+add_action('woocommerce_after_cart_totals', 'qcwc_add_custom_cart_button', 10);
+
+function qcwc_add_custom_cart_button()
+{
+    $checkout_url = wc_get_checkout_url() . '?quick-c-checkout=true';
+    ?>
+    <div class="wc-proceed-to-checkout">
+        <a href="<?php echo esc_url($checkout_url); ?>" class="qcwc-cart-button">Quick c checkout</a>
+    </div>
+    <?php
+}
 
 function display_delivery_preferences_checkout($checkout)
 {
-    if (is_user_logged_in()) {
+    if (is_user_logged_in() && (isset($_GET['quick-c-checkout']) && $_GET['quick-c-checkout'] === 'true')) {
         $user_id = get_current_user_id();
 
         $delivery_preferences = get_user_meta($user_id, 'delivery_preferences', true);
@@ -463,8 +608,10 @@ function QCWC_handle_authentication()
     // $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443 ? "https://" : "http://";
     // $domain = $protocol . $_SERVER['HTTP_HOST'];
     // $domain = $_SERVER['HTTP_HOST'];
-    $domain = $_SERVER['HTTP_HOST'];
-    $root_domain = get_root_domain($domain);
+
+    // $domain = $_SERVER['HTTP_HOST'];
+    // $root_domain = get_root_domain($domain);
+    $root_domain = "divistack.com";
     global $platform;
     $verifyMethod = isset($_POST['verifyMethod']) ? sanitize_text_field($_POST['verifyMethod']) : 'JWT';
 
@@ -512,8 +659,10 @@ function QCWC_check_api_key()
 
     // $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443 ? "https://" : "http://";
     // $domain = $_SERVER['HTTP_HOST'];
-    $domain = $_SERVER['HTTP_HOST'];
-    $root_domain = get_root_domain($domain);
+
+    // $domain = $_SERVER['HTTP_HOST'];
+    // $root_domain = get_root_domain($domain);
+    $root_domain = "divistack.com";
     global $platform;
     $email = isset($_GET['email']) ? sanitize_text_field($_GET['email']) : '';
 
@@ -614,46 +763,70 @@ function QCWC_save_user_detail()
 
     update_user_meta($user_id, 'billing_first_name', $first_name);
     update_user_meta($user_id, 'billing_last_name', $last_name);
-    update_user_meta(
-        $user_id,
-        'billing_short_address',
-        $billing_short_address
-    );
-    update_user_meta(
-        $user_id,
-        'billing_region',
-        $region
-    );
-    update_user_meta(
-        $user_id,
-        'billing_building_number',
-        $building_number
-    );
-    update_user_meta(
-        $user_id,
-        'billing_street_name',
-        $street_name
-    );
-    update_user_meta(
-        $user_id,
-        'billing_district',
-        $district
-    );
-    update_user_meta(
-        $user_id,
-        'billing_unit_number',
-        $unit_number
-    );
-    update_user_meta(
-        $user_id,
-        'billing_lat',
-        $latitude
-    );
-    update_user_meta(
-        $user_id,
-        'billing_long',
-        $longitude
-    );
+
+    if (get_option('qcwc_enable_short_address')) {
+        update_user_meta(
+            $user_id,
+            'billing_short_address',
+            $billing_short_address
+        );
+    }
+
+    if (get_option('qcwc_enable_region')) {
+        update_user_meta(
+            $user_id,
+            'billing_region',
+            $region
+        );
+    }
+
+    if (get_option('qcwc_enable_building_number')) {
+        update_user_meta(
+            $user_id,
+            'billing_building_number',
+            $building_number
+        );
+    }
+
+    if (get_option('qcwc_enable_street_name')) {
+        update_user_meta(
+            $user_id,
+            'billing_street_name',
+            $street_name
+        );
+    }
+
+    if (get_option('qcwc_enable_district')) {
+        update_user_meta(
+            $user_id,
+            'billing_district',
+            $district
+        );
+    }
+
+    if (get_option('qcwc_enable_unit_number')) {
+        update_user_meta(
+            $user_id,
+            'billing_unit_number',
+            $unit_number
+        );
+    }
+
+    if (get_option('qcwc_enable_lat')) {
+        update_user_meta(
+            $user_id,
+            'billing_lat',
+            $latitude
+        );
+    }
+
+    if (get_option('qcwc_enable_long')) {
+        update_user_meta(
+            $user_id,
+            'billing_long',
+            $longitude
+        );
+    }
     update_user_meta(
         $user_id,
         'billing_address_1',
@@ -780,46 +953,72 @@ function QCWC_save_user_primary_detail()
                 'billing_address_1',
                 $primary_address_field
             );
-            update_user_meta(
-                $user_id,
-                'billing_short_address',
-                $short_address
-            );
-            update_user_meta(
-                $user_id,
-                'billing_region',
-                $region
-            );
-            update_user_meta(
-                $user_id,
-                'billing_unit_number',
-                $unit_number
-            );
-            update_user_meta(
-                $user_id,
-                'billing_building_number',
-                $building_number
-            );
-            update_user_meta(
-                $user_id,
-                'billing_street_name',
-                $street_name
-            );
-            update_user_meta(
-                $user_id,
-                'billing_district',
-                $district
-            );
-            update_user_meta(
-                $user_id,
-                'billing_lat',
-                $latitude
-            );
-            update_user_meta(
-                $user_id,
-                'billing_long',
-                $longitude
-            );
+
+            if (get_option('qcwc_enable_short_address')) {
+                update_user_meta(
+                    $user_id,
+                    'billing_short_address',
+                    $short_address
+                );
+            }
+
+            if (get_option('qcwc_enable_region')) {
+                update_user_meta(
+                    $user_id,
+                    'billing_region',
+                    $region
+                );
+            }
+
+            if (get_option('qcwc_enable_unit_number')) {
+                update_user_meta(
+                    $user_id,
+                    'billing_unit_number',
+                    $unit_number
+                );
+            }
+
+            if (get_option('qcwc_enable_building_number')) {
+                update_user_meta(
+                    $user_id,
+                    'billing_building_number',
+                    $building_number
+                );
+            }
+
+            if (get_option('qcwc_enable_street_name')) {
+                update_user_meta(
+                    $user_id,
+                    'billing_street_name',
+                    $street_name
+                );
+            }
+
+            if (get_option('qcwc_enable_district')) {
+                update_user_meta(
+                    $user_id,
+                    'billing_district',
+                    $district
+                );
+            }
+
+            if (get_option('qcwc_enable_lat')) {
+                update_user_meta(
+                    $user_id,
+                    'billing_lat',
+                    $latitude
+                );
+            }
+
+            if (get_option('qcwc_enable_long')) {
+                update_user_meta(
+                    $user_id,
+                    'billing_long',
+                    $longitude
+                );
+            }
+
+
             update_user_meta($user_id, 'billing_address_2', $secondary_address_field);
             update_user_meta($user_id, 'billing_city', $city);
             update_user_meta($user_id, 'billing_postcode', $postal_code);
@@ -852,11 +1051,23 @@ function QCWC_save_user_primary_detail()
     }
 }
 
+add_action('woocommerce_checkout_order_review', 'add_hidden_quick_checkout_field');
+
+function add_hidden_quick_checkout_field()
+{
+    if (isset($_GET['quick-c-checkout']) && $_GET['quick-c-checkout'] === 'true') {
+        ?>
+        <input type="hidden" name="quick-c-checkout" value="true">
+        <?php
+    }
+}
+
+
 add_action('woocommerce_thankyou', 'QCWC_create_order');
 
 function QCWC_create_order($order_id)
 {
-
+    // if (isset($_POST['quick-c-checkout']) && $_POST['quick-c-checkout'] === 'true') {
     $order = wc_get_order($order_id);
 
     if ($order_id) {
@@ -901,36 +1112,39 @@ function QCWC_create_order($order_id)
                 update_post_meta($order_id, 'quick_c_order_id', $response['data']['id']);
             }
             $order->update_status('created');
+
+            echo "Hello";
         }
     }
+    // }
 }
 
 add_action('woocommerce_checkout_update_order_meta', 'save_custom_billing_fields');
 
 function save_custom_billing_fields($order_id)
 {
-    if (!empty($_POST['billing_short_address'])) {
+    if (isset($_POST['billing_short_address']) && !empty($_POST['billing_short_address'])) {
         update_post_meta($order_id, 'billing_short_address', sanitize_text_field($_POST['billing_short_address']));
     }
-    if (!empty($_POST['billing_region'])) {
+    if (isset($_POST['billing_region']) && !empty($_POST['billing_region'])) {
         update_post_meta($order_id, 'billing_region', sanitize_text_field($_POST['billing_region']));
     }
-    if (!empty($_POST['billing_unit_number'])) {
+    if (isset($_POST['billing_unit_number']) && !empty($_POST['billing_unit_number'])) {
         update_post_meta($order_id, 'billing_unit_number', sanitize_text_field($_POST['billing_unit_number']));
     }
-    if (!empty($_POST['billing_building_number'])) {
+    if (isset($_POST['billing_building_number']) && !empty($_POST['billing_building_number'])) {
         update_post_meta($order_id, 'billing_building_number', sanitize_text_field($_POST['billing_building_number']));
     }
-    if (!empty($_POST['billing_street_name'])) {
+    if (isset($_POST['billing_street_name']) && !empty($_POST['billing_street_name'])) {
         update_post_meta($order_id, 'billing_street_name', sanitize_text_field($_POST['billing_street_name']));
     }
-    if (!empty($_POST['billing_district'])) {
+    if (isset($_POST['billing_district']) && !empty($_POST['billing_district'])) {
         update_post_meta($order_id, 'billing_district', sanitize_text_field($_POST['billing_district']));
     }
-    if (!empty($_POST['billing_lat'])) {
+    if (isset($_POST['billing_lat']) && !empty($_POST['billing_lat'])) {
         update_post_meta($order_id, 'billing_lat', sanitize_text_field($_POST['billing_lat']));
     }
-    if (!empty($_POST['billing_long'])) {
+    if (isset($_POST['billing_long']) && !empty($_POST['billing_long'])) {
         update_post_meta($order_id, 'billing_long', sanitize_text_field($_POST['billing_long']));
     }
 }
@@ -984,14 +1198,45 @@ add_action('woocommerce_admin_order_data_after_billing_address', 'display_custom
 
 function display_custom_billing_fields_in_admin($order)
 {
-    echo '<p><strong>' . __('Short Address') . ':</strong> ' . get_post_meta($order->get_id(), 'billing_short_address', true) . '</p>';
-    echo '<p><strong>' . __('Region') . ':</strong> ' . get_post_meta($order->get_id(), 'billing_region', true) . '</p>';
-    echo '<p><strong>' . __('Unit Number') . ':</strong> ' . get_post_meta($order->get_id(), 'billing_unit_number', true) . '</p>';
-    echo '<p><strong>' . __('Building Number') . ':</strong> ' . get_post_meta($order->get_id(), 'billing_building_number', true) . '</p>';
-    echo '<p><strong>' . __('Street Name') . ':</strong> ' . get_post_meta($order->get_id(), 'billing_street_name', true) . '</p>';
-    echo '<p><strong>' . __('District') . ':</strong> ' . get_post_meta($order->get_id(), 'billing_district', true) . '</p>';
-    echo '<p><strong>' . __('Latitude') . ':</strong> ' . get_post_meta($order->get_id(), 'billing_lat', true) . '</p>';
-    echo '<p><strong>' . __('Longitude') . ':</strong> ' . get_post_meta($order->get_id(), 'billing_long', true) . '</p>';
+    $short_address = get_post_meta($order->get_id(), 'billing_short_address', true);
+    $region = get_post_meta($order->get_id(), 'billing_region', true);
+    $unit_number = get_post_meta($order->get_id(), 'billing_unit_number', true);
+    $building_number = get_post_meta($order->get_id(), 'billing_building_number', true);
+    $street_name = get_post_meta($order->get_id(), 'billing_street_name', true);
+    $district = get_post_meta($order->get_id(), 'billing_district', true);
+    $lat = get_post_meta($order->get_id(), 'billing_lat', true);
+    $long = get_post_meta($order->get_id(), 'billing_long', true);
+    if (!empty($short_address)) {
+        echo '<p><strong>' . __('Short Address') . ':</strong> ' . $short_address . '</p>';
+    }
+
+    if (!empty($region)) {
+        echo '<p><strong>' . __('Region') . ':</strong> ' . $region . '</p>';
+    }
+
+    if (!empty($unit_number)) {
+        echo '<p><strong>' . __('Unit Number') . ':</strong> ' . $unit_number . '</p>';
+    }
+
+    if (!empty($building_number)) {
+        echo '<p><strong>' . __('Building Number') . ':</strong> ' . $building_number . '</p>';
+    }
+
+    if (!empty($street_name)) {
+        echo '<p><strong>' . __('Street Name') . ':</strong> ' . $street_name . '</p>';
+    }
+
+    if (!empty($district)) {
+        echo '<p><strong>' . __('District') . ':</strong> ' . $district . '</p>';
+    }
+
+    if (!empty($lat)) {
+        echo '<p><strong>' . __('Latitude') . ':</strong> ' . $lat . '</p>';
+    }
+
+    if (!empty($long)) {
+        echo '<p><strong>' . __('Longitude') . ':</strong> ' . $long . '</p>';
+    }
 }
 
 

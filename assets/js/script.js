@@ -26,7 +26,11 @@ document.addEventListener("DOMContentLoaded", () => {
   let quick_c_logout_btn = document.getElementById("quick-c-logout-btn");
   email.value = popupData.userEmail;
 
-  if (typeof popupData !== "undefined" && popupData.isTokenEmpty === "1") {
+  if (
+    typeof popupData !== "undefined" &&
+    popupData.isTokenEmpty === "1" &&
+    popupData.quick_c_checkout
+  ) {
     document.getElementById("QCWC_loginModal").style.display = "flex";
     document.body.style.overflow = "hidden";
     document.querySelector(".login-content").style.display = "block";
@@ -36,7 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const editAddressButton = document.querySelector("#edit-address-button");
 
-  if (editAddressButton) {
+  if (editAddressButton && popupData.quick_c_checkout) {
     editAddressButton.addEventListener("click", function () {
       fetchUserDetails(email.value);
       document.getElementById("QCWC_addressesModal").style.display = "flex";
