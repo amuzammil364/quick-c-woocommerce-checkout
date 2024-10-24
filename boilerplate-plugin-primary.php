@@ -288,15 +288,18 @@ function remove_auth_token_from_session()
 // Check is User Logged in and is Checkout so script pass token and user email
 function QCWC_custom_checkout_popup()
 {
-    if (is_checkout() && is_user_logged_in()) {
+    if (is_checkout()) {
         $user_id = get_current_user_id();
-        $user_token = get_user_meta($user_id, 'quick-c-user-api-key', true);
+        if ($user_id) {
+            $user_token = get_user_meta($user_id, 'quick-c-user-api-key', true);
+        }
 
         wp_localize_script('QCWC-script', 'popupData', array(
-            'isTokenEmpty' => empty($user_token),
+            'isTokenEmpty' => isset($user_id) ? empty($user_token) : "1",
             // 'userEmail' => wp_get_current_user()->user_email,
-            'userEmail' => "admin@divistack.com",
-            'quick_c_checkout' => isset($_GET['quick-c-checkout']) && $_GET['quick-c-checkout'] === 'true', // Check for string 'true'
+            'userEmail' => isset($user_id) ? wp_get_current_user()->user_email : "",
+            // 'userEmail' => "admin@divistack.com",
+            'quick_c_checkout' => isset($_GET['quick-c-checkout']) && $_GET['quick-c-checkout'] === 'true',
         ));
     }
 
@@ -318,8 +321,6 @@ add_action('woocommerce_before_checkout_billing_form', 'add_custom_button_checko
 
 function custom_billing_fields($checkout)
 {
-
-    // Check if each field is enabled in settings and display accordingly
 
     if (get_option('qcwc_enable_short_address') && (isset($_GET['quick-c-checkout']) && $_GET['quick-c-checkout'] === 'true')) {
         woocommerce_form_field(
@@ -424,6 +425,16 @@ function custom_billing_fields($checkout)
             $checkout->get_value('billing_long')
         );
     }
+
+
+    woocommerce_form_field(
+        'quick_c_checkout_enabled',
+        array(
+            'type' => 'hidden',
+            'default' => isset($_GET['quick-c-checkout']) && $_GET['quick-c-checkout'] === 'true' ? 'true' : 'false',
+        ),
+        $checkout->get_value('quick_c_checkout_enabled')
+    );
 }
 
 add_action('woocommerce_after_checkout_billing_form', 'custom_billing_fields');
@@ -620,6 +631,7 @@ function QCWC_handle_authentication()
 
     if ($response) {
         $_SESSION['quick_c_user_token'] = $response['data']['token'];
+
         wp_send_json($response);
     } else {
         wp_send_json_error('Authentication failed');
@@ -674,9 +686,36 @@ function QCWC_check_api_key()
     // remove_auth_token_from_session();
     if ($response) {
         if (isset($response['status_code']) && $response['status_code'] == 200) {
-            $current_user_id = get_current_user_id();
             $api_key = $response['data']['api_key'];
+
+            if (!is_user_logged_in()) {
+                $user = get_user_by('email', $email);
+
+                if (!$user) {
+                    $random_password = wp_generate_password();
+                    $user_id = wp_create_user($email, $random_password, $email);
+
+                    wp_update_user(array(
+                        'ID' => $user_id,
+                        'role' => 'customer'
+                    ));
+
+                    $user = get_user_by('id', $user_id);
+                }
+
+                wp_set_auth_cookie($user->ID, true);
+                wp_set_current_user($user->ID);
+                do_action('wp_login', $user->user_login, $user);
+            }
+
+            $current_user_id = get_current_user_id();
             update_user_meta($current_user_id, 'quick-c-user-api-key', $api_key);
+        }
+
+        if (!is_user_logged_in()) {
+            if (isset($response['status_code']) && $response['status_code'] == 404) {
+
+            }
         }
 
         wp_send_json($response);
@@ -1051,72 +1090,62 @@ function QCWC_save_user_primary_detail()
     }
 }
 
-add_action('woocommerce_checkout_order_review', 'add_hidden_quick_checkout_field');
-
-function add_hidden_quick_checkout_field()
-{
-    if (isset($_GET['quick-c-checkout']) && $_GET['quick-c-checkout'] === 'true') {
-        ?>
-        <input type="hidden" name="quick-c-checkout" value="true">
-        <?php
-    }
-}
-
 
 add_action('woocommerce_thankyou', 'QCWC_create_order');
 
 function QCWC_create_order($order_id)
 {
-    // if (isset($_POST['quick-c-checkout']) && $_POST['quick-c-checkout'] === 'true') {
-    $order = wc_get_order($order_id);
+    $quick_checkout_enabled = get_post_meta($order_id, 'quick_c_checkout_enabled', true);
 
-    if ($order_id) {
 
-        $data = array(
-            "order_id" => $order_id,
-            "store_name" => "Quick-c",
-            "store_image" => "",
-            "current_status" => "created",
-            "platform_domain" => "saqibdev.com",
-            "order_items" => array(),
-        );
+    if ($quick_checkout_enabled === 'yes') {
+        $order = wc_get_order($order_id);
 
-        foreach ($order->get_items() as $item_id => $item) {
-            $product_name = $item->get_name();
-            $quantity = $item->get_quantity();
+        if ($order_id) {
 
-            $product = $item->get_product();
-
-            $image_url = '';
-            if ($product && $product->get_image_id()) {
-                $image_url = wp_get_attachment_url($product->get_image_id());
-            }
-
-            $data['order_items'][] = array(
-                'item_name' => $product_name,
-                'quantity' => $quantity,
-                'item_image' => $image_url,
+            $data = array(
+                "order_id" => $order_id,
+                "store_name" => "Quick-c",
+                "store_image" => "",
+                "current_status" => "created",
+                "platform_domain" => "saqibdev.com",
+                "order_items" => array(),
             );
-        }
 
-        $json_data = json_encode($data);
+            foreach ($order->get_items() as $item_id => $item) {
+                $product_name = $item->get_name();
+                $quantity = $item->get_quantity();
 
-        $user_id = get_current_user_id();
-        $user_token = get_user_meta($user_id, 'quick-c-user-api-key', true);
-        $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/order/create/');
-        $response = $api_handler->createOrder($user_token, $json_data);
+                $product = $item->get_product();
 
-        if ($response) {
-            if (isset($response['data']['id'])) {
+                $image_url = '';
+                if ($product && $product->get_image_id()) {
+                    $image_url = wp_get_attachment_url($product->get_image_id());
+                }
 
-                update_post_meta($order_id, 'quick_c_order_id', $response['data']['id']);
+                $data['order_items'][] = array(
+                    'item_name' => $product_name,
+                    'quantity' => $quantity,
+                    'item_image' => $image_url,
+                );
             }
-            $order->update_status('created');
 
-            echo "Hello";
+            $json_data = json_encode($data);
+
+            $user_id = get_current_user_id();
+            $user_token = get_user_meta($user_id, 'quick-c-user-api-key', true);
+            $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/order/create/');
+            $response = $api_handler->createOrder($user_token, $json_data);
+
+            if ($response) {
+                if (isset($response['data']['id'])) {
+
+                    update_post_meta($order_id, 'quick_c_order_id', $response['data']['id']);
+                }
+                $order->update_status('created');
+            }
         }
     }
-    // }
 }
 
 add_action('woocommerce_checkout_update_order_meta', 'save_custom_billing_fields');
@@ -1147,6 +1176,10 @@ function save_custom_billing_fields($order_id)
     if (isset($_POST['billing_long']) && !empty($_POST['billing_long'])) {
         update_post_meta($order_id, 'billing_long', sanitize_text_field($_POST['billing_long']));
     }
+    if (isset($_POST['quick_c_checkout_enabled'])) {
+        $quick_checkout_enabled = $_POST['quick_c_checkout_enabled'] === 'true' ? 'yes' : 'no';
+        update_post_meta($order_id, 'quick_c_checkout_enabled', $quick_checkout_enabled);
+    }
 }
 
 
@@ -1157,40 +1190,44 @@ function QCWC_update_order($order_id)
 
     $order = wc_get_order($order_id);
     $quick_c_order_meta_id = get_post_meta($order_id, 'quick_c_order_id', true);
+    $quick_checkout_enabled = get_post_meta($order_id, 'quick_c_checkout_enabled', true);
 
-    if ($order_id && $quick_c_order_meta_id) {
+    if ($quick_checkout_enabled === 'yes') {
+
+        if ($order_id && $quick_c_order_meta_id) {
 
 
-        $data = array(
-            "store_name" => "Quick-c",
-            "current_status" => $order->get_status(),
-            "order_items" => array(),
-        );
+            $data = array(
+                "store_name" => "Quick-c",
+                "current_status" => $order->get_status(),
+                "order_items" => array(),
+            );
 
-        foreach ($order->get_items() as $item_id => $item) {
-            $product_name = $item->get_name();
-            $quantity = $item->get_quantity();
+            foreach ($order->get_items() as $item_id => $item) {
+                $product_name = $item->get_name();
+                $quantity = $item->get_quantity();
 
-            $product = $item->get_product();
+                $product = $item->get_product();
 
-            $image_url = '';
-            if ($product && $product->get_image_id()) {
-                $image_url = wp_get_attachment_url($product->get_image_id());
+                $image_url = '';
+                if ($product && $product->get_image_id()) {
+                    $image_url = wp_get_attachment_url($product->get_image_id());
+                }
+
+                $data['order_items'][] = array(
+                    'item_name' => $product_name,
+                    'quantity' => $quantity,
+                    'item_image' => $image_url,
+                );
             }
 
-            $data['order_items'][] = array(
-                'item_name' => $product_name,
-                'quantity' => $quantity,
-                'item_image' => $image_url,
-            );
+            $json_data = json_encode($data);
+
+            $user_id = $order->get_user_id();
+            $user_token = get_user_meta($user_id, 'quick-c-user-api-key', true);
+            $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/order/update/' . $quick_c_order_meta_id . '/');
+            $response = $api_handler->updateOrder($user_token, $json_data);
         }
-
-        $json_data = json_encode($data);
-
-        $user_id = $order->get_user_id();
-        $user_token = get_user_meta($user_id, 'quick-c-user-api-key', true);
-        $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/order/update/' . $quick_c_order_meta_id . '/');
-        $response = $api_handler->updateOrder($user_token, $json_data);
     }
 }
 

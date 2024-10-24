@@ -120,8 +120,9 @@ document.addEventListener("DOMContentLoaded", () => {
           user_addresses.innerHTML = "";
           user_delivery_prefences_list.innerHTML = "";
 
-          userDetail.addresses.forEach((address) => {
-            userAddressesHtml += `
+          if (userDetail.addresses.length !== 0) {
+            userDetail.addresses.forEach((address) => {
+              userAddressesHtml += `
             <div class="address">
               <label class="custom-radio">
                 <input type="radio" name="user_address" value="${address.id}"
@@ -160,20 +161,20 @@ document.addEventListener("DOMContentLoaded", () => {
                     ? address.region
                     : ""
                 }" data-short_address="${
-              address.short_address && address.short_address !== null
-                ? address.short_address
-                : ""
-            }" data-primary_address="${
-              address.primary_address && address.primary_address !== null
-                ? address.primary_address
-                : ""
-            }" data-secondary_address="${
-              address.secondary && address.secondary !== null
-                ? address.secondary
-                : ""
-            }" data-city="${address.city}" data-postal_code="${
-              address.postal_code
-            }" ${address.is_primary ? "checked" : ""} />
+                address.short_address && address.short_address !== null
+                  ? address.short_address
+                  : ""
+              }" data-primary_address="${
+                address.primary_address && address.primary_address !== null
+                  ? address.primary_address
+                  : ""
+              }" data-secondary_address="${
+                address.secondary && address.secondary !== null
+                  ? address.secondary
+                  : ""
+              }" data-city="${address.city}" data-postal_code="${
+                address.postal_code
+              }" ${address.is_primary ? "checked" : ""} />
              <span class="radio-custom"></span>
                 ${
                   address.primary_address && address.primary_address !== null
@@ -189,38 +190,47 @@ document.addEventListener("DOMContentLoaded", () => {
               </label>
               </div>
             `;
-          });
-          userDetail.delivery_preferences.forEach((userDelivery) => {
-            const startTime =
-              userDelivery.start_time && userDelivery.start_time !== null
-                ? userDelivery.start_time
-                : "";
-            const endTime =
-              userDelivery.end_time && userDelivery.end_time !== null
-                ? userDelivery.end_time
-                : "";
-            userDeliveryPrefencesHtml += `
+            });
+          } else {
+            userAddressesHtml += "<p>No Addresses Found!</p>";
+          }
+
+          if (userDetail.delivery_preferences.length !== 0) {
+            userDetail.delivery_preferences.forEach((userDelivery) => {
+              const startTime =
+                userDelivery.start_time && userDelivery.start_time !== null
+                  ? userDelivery.start_time
+                  : "";
+              const endTime =
+                userDelivery.end_time && userDelivery.end_time !== null
+                  ? userDelivery.end_time
+                  : "";
+              userDeliveryPrefencesHtml += `
             <div class="preference">
               <label class="custom-radio">
                 <input type="radio" name="delivery_preference" value="${
                   userDelivery.id
                 }" data-day="${
-              userDelivery.day
-            }" data-start_time="${startTime}" data-end_time="${endTime}" ${
-              userDelivery.is_primary ? "checked" : ""
-            } />
+                userDelivery.day
+              }" data-start_time="${startTime}" data-end_time="${endTime}" ${
+                userDelivery.is_primary ? "checked" : ""
+              } />
                 <span class="radio-custom"></span>
                 <span>${
                   userDelivery.day && userDelivery.day !== null
                     ? userDelivery.day
                     : ""
                 } ( ${
-              startTime ? startTime + " -" : startTime
-            } ${endTime} )</span>
+                startTime ? startTime + " -" : startTime
+              } ${endTime} )</span>
               </label>
             </div>
             `;
-          });
+            });
+          } else {
+            userDeliveryPrefencesHtml += "<p>No Delivery Prefences Found!</p>";
+          }
+
           user_addresses.innerHTML += userAddressesHtml;
           user_delivery_prefences_list.innerHTML += userDeliveryPrefencesHtml;
           user_address_loader.style.display = "none";
