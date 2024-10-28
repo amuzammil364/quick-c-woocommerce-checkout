@@ -11,6 +11,7 @@
   justify-content: center;
   padding: 32px 20px;
   font-family: "Poppins", sans-serif;
+  overflow-y: scroll;
 }
 
 .QCWC_addressesModal {
@@ -101,7 +102,10 @@
   max-width: 480px;
   width: 100%;
   padding: 30px;
+  padding-bottom: 10px;
   border-radius: 10px;
+  max-height: 600px;
+  overflow-y: scroll;
 }
 
 .QCWC_addressesModal .QCWC_modal-content {
@@ -170,12 +174,13 @@
   font-size: 16px;
   text-align: center;
   border-radius: 6px;
+  padding-bottom: 0 !important;
 }
 
 .QCWC_loginModal .QCWC_modal-content .error-message.active,
 .QCWC_addressesModal .QCWC_modal-content .error-message.active,
 .QCWC_prefencesModal .QCWC_modal-content .error-message.active {
-  padding: 16px 20px;
+  padding: 16px 20px !important;
   margin-bottom: 20px;
 }
 
@@ -186,6 +191,10 @@
 .QCWC_loginModal h2 {
   font-size: 24px;
   font-weight: 700;
+}
+
+.QCWC_loginModal .register-content h2 {
+  margin-bottom: 20px;
 }
 
 .QCWC_addressesModal h2 {
@@ -227,6 +236,11 @@
 }
 
 .QCWC_loginModal .QCWC_modal-content .errorText {
+  color: red;
+  font-size: 14px;
+}
+
+.QCWC_loginModal .QCWC_modal-content .error {
   color: red;
   font-size: 14px;
 }
@@ -571,4 +585,254 @@ button[name="calc_shipping"]:hover::after {
 
 .shipping-calculator-button {
   color: #252525;
+}
+
+.register-account-para {
+  width: 100%;
+  text-align: center;
+  font-size: 14px !important;
+  margin-top: 26px !important;
+  margin-bottom: 20px !important;
+}
+
+.register-account-para .link {
+  font-weight: 600;
+  color: #000 !important;
+  cursor: pointer;
+}
+
+.login-account-para {
+  width: 100%;
+  text-align: center;
+  font-size: 14px !important;
+  margin-top: 26px !important;
+  margin-bottom: 20px !important;
+}
+
+.login-account-para .link {
+  font-weight: 600;
+  color: #000 !important;
+  cursor: pointer;
+}
+
+.QCWC_loginModal .register-content .register-tabs {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  position: relative;
+  margin-bottom: 14px;
+}
+
+.QCWC_loginModal .register-content .register-tabs .middle-line {
+  position: absolute;
+  top: 64px;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  border-radius: 50px;
+  background-color: #e9e9e9;
+}
+
+.QCWC_loginModal
+  .register-content
+  .register-tabs
+  .register-tab:nth-child(2).active
+  ~ .middle-line
+  .middle-line-indicator {
+  left: 33.33%;
+}
+
+.QCWC_loginModal
+  .register-content
+  .register-tabs
+  .register-tab:nth-child(3).active
+  ~ .middle-line
+  .middle-line-indicator {
+  left: 66.66%;
+}
+
+.QCWC_loginModal
+  .register-content
+  .register-tabs
+  .middle-line
+  .middle-line-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 33.33%;
+  height: 100%;
+  background-color: #252525;
+  border-radius: 50px;
+  transition: 0.3s;
+}
+
+.QCWC_loginModal .register-content .register-tabs .register-tab {
+  width: 33.33%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.QCWC_loginModal .register-content .register-tabs .register-tab h3 {
+  font-size: 14px;
+  color: grey;
+  transition: 0.2s;
+}
+
+.QCWC_loginModal .register-content .register-tabs .register-tab.active h3 {
+  color: #252525;
+}
+
+.QCWC_loginModal
+  .register-content
+  .register-tabs
+  .register-tab
+  .register-tab-icon-container {
+  background-color: #e9e9e9;
+  width: 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  margin-bottom: 34px;
+  transition: 0.3s;
+}
+
+.QCWC_loginModal
+  .register-content
+  .register-tabs
+  .register-tab.active
+  .register-tab-icon-container {
+  background-color: #252525;
+}
+
+.QCWC_loginModal
+  .register-content
+  .register-tabs
+  .register-tab
+  .register-tab-icon-container
+  .register-tab-icon {
+  color: #252525;
+  font-size: 20px;
+  transition: 0.3s;
+}
+
+.QCWC_loginModal
+  .register-content
+  .register-tabs
+  .register-tab:nth-child(1)
+  .register-tab-icon-container
+  .register-tab-icon {
+  border: 2px solid #252525;
+  width: 58%;
+  height: 58%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 12px;
+}
+
+.QCWC_loginModal
+  .register-content
+  .register-tabs
+  .register-tab:nth-child(1).active
+  .register-tab-icon-container
+  .register-tab-icon {
+  border: 2px solid #fff;
+}
+
+.QCWC_loginModal
+  .register-content
+  .register-tabs
+  .register-tab.active
+  .register-tab-icon-container
+  .register-tab-icon {
+  color: #fff;
+}
+
+.QCWC_loginModal .register-content .register-tabs-content .QCWC_form-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 20px 0;
+}
+
+.QCWC_loginModal
+  .register-content
+  .register-tabs-content
+  .QCWC_form-groups
+  .QCWC_form-group-inputs {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.QCWC_loginModal
+  .register-content
+  .register-tabs-content
+  .QCWC_form-groups
+  .QCWC_form-group-inputs
+  .QCWC_child-form-group:nth-child(1) {
+  width: 29%;
+}
+
+.QCWC_loginModal
+  .register-content
+  .register-tabs-content
+  .QCWC_form-groups
+  .QCWC_form-group-inputs
+  .QCWC_child-form-group:nth-child(2) {
+  width: 69%;
+}
+
+.QCWC_loginModal .add-new-delivery-time-tagline {
+  text-align: right !important;
+  width: 100% !important;
+  font-size: 16px !important;
+  color: #252525 !important;
+  margin: 16px 0;
+  cursor: pointer;
+}
+
+.QCWC_loginModal .add-new-delivery-time-form {
+  display: none;
+  margin-top: 30px;
+}
+
+.QCWC_loginModal .add-new-delivery-time-form .QCWC_delivery-time-form-groups {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+.QCWC_loginModal .delivery-times {
+  display: flex;
+  flex-direction: column;
+  gap: 13px 0;
+}
+
+.QCWC_loginModal .add-new-delivery-time-form .btns {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.QCWC_loginModal .add-new-delivery-time-form .btns button {
+  width: 49%;
+  font-size: 14px;
+}
+
+.QCWC_loginModal .add-new-delivery-time-form .btns button:nth-child(1) {
+  background-color: #e9e9e9;
+  color: #252525;
+  border-radius: 8px;
+  border-color: #e9e9e9;
+}
+
+.QCWC_loginModal .add-new-delivery-time-form .btns button:nth-child(2) {
+  border-radius: 8px;
 }

@@ -24,6 +24,33 @@ document.addEventListener("DOMContentLoaded", () => {
     ".user-delivery-prefences-loader"
   );
   let quick_c_logout_btn = document.getElementById("quick-c-logout-btn");
+  let register_account_paras = document.querySelectorAll(
+    ".register-account-para"
+  );
+  let login_account_para = document.querySelector(".login-account-para");
+  let login_account_para_link = login_account_para.querySelector(".link");
+  let register_tabs = document.querySelectorAll(".register-tab");
+  let register_tab_contents = document.querySelectorAll(
+    ".register-tab-content"
+  );
+  const add_new_time_tagline = document.querySelector(
+    ".add-new-delivery-time-tagline"
+  );
+  const add_new_time_form = document.querySelector(
+    ".add-new-delivery-time-form"
+  );
+  const add_delivery_time_button = document.getElementById("add_delivery_time");
+  const cancel_delivery_time_button = document.getElementById(
+    "cancel_delivery_time"
+  );
+  const delivery_times_container = document.querySelector(".delivery-times");
+  let deliveryPreferences = [
+    {
+      day: "MORNING",
+      start_time: "09:00:00",
+      end_time: "10:00:00",
+    },
+  ];
   email.value = popupData.userEmail;
 
   if (
@@ -33,10 +60,230 @@ document.addEventListener("DOMContentLoaded", () => {
   ) {
     document.getElementById("QCWC_loginModal").style.display = "flex";
     document.body.style.overflow = "hidden";
+    document.querySelector(".login-content").style.display = "none";
+    document.querySelector(".verification-content").style.display = "none";
+    document.querySelector(".otp-content").style.display = "none";
+    document.querySelector(".register-content").style.display = "block";
+  }
+
+  register_account_paras.forEach((account_para) => {
+    let link = account_para.querySelector(".link");
+    link.addEventListener("click", () => {
+      document.querySelector(".login-content").style.display = "none";
+      document.querySelector(".verification-content").style.display = "none";
+      document.querySelector(".otp-content").style.display = "none";
+      document.querySelector(".register-content").style.display = "block";
+      login_account_para.style.display = "block";
+      register_account_paras.forEach((account_para) => {
+        account_para.styles.display = "none";
+      });
+    });
+  });
+
+  login_account_para_link.addEventListener("click", () => {
     document.querySelector(".login-content").style.display = "block";
     document.querySelector(".verification-content").style.display = "none";
     document.querySelector(".otp-content").style.display = "none";
+    document.querySelector(".register-content").style.display = "none";
+    login_account_para.style.display = "none";
+    register_account_paras.forEach((account_para) => {
+      account_para.styles.display = "block";
+    });
+  });
+
+  register_tabs.forEach((register_tab) => {
+    const register_tab_attr = register_tab.getAttribute("data-target");
+    register_tab.addEventListener("click", () => {
+      register_tabs.forEach((tab) => tab.classList.remove("active"));
+
+      register_tab.classList.add("active");
+
+      register_tab_contents.forEach((content) => {
+        content.style.display = "none";
+      });
+      const targetContent = document.getElementById(register_tab_attr);
+      if (targetContent) {
+        targetContent.style.display = "block";
+      }
+    });
+  });
+
+  register_tabs[0].click();
+
+  add_new_time_tagline.addEventListener("click", () => {
+    add_new_time_tagline.style.display = "none";
+    add_new_time_form.style.display = "block";
+  });
+
+  cancel_delivery_time_button.addEventListener("click", () => {
+    add_new_time_tagline.style.display = "block";
+    add_new_time_form.style.display = "none";
+  });
+
+  add_delivery_time_button.addEventListener("click", () => {
+    const day = document.getElementById("delivery_day");
+    const startTime = document.getElementById("delivery_start_time");
+    const endTime = document.getElementById("delivery_end_time");
+
+    if (!day.value) {
+      day.classList.add("valid");
+    } else {
+      day.classList.remove("valid");
+    }
+    if (!startTime.value) {
+      startTime.classList.add("valid");
+    } else {
+      startTime.classList.remove("valid");
+    }
+    if (!endTime.value) {
+      endTime.classList.add("valid");
+    } else {
+      endTime.classList.remove("valid");
+    }
+
+    if (day.value && startTime.value && endTime.value) {
+      const deliveryPreference = {
+        day: day.value.toUpperCase(),
+        start_time: startTime.value,
+        end_time: endTime.value,
+        default: false,
+      };
+
+      deliveryPreferences.push(deliveryPreference);
+
+      const newDeliveryTime = document.createElement("div");
+      newDeliveryTime.classList.add("delivery-time");
+      const deliveryLabel = `${day.value.toUpperCase()} ( ${
+        startTime.value
+      } - ${endTime.value} )`;
+      newDeliveryTime.innerHTML = `
+        <label class="custom-radio">
+            <input type="radio" name="delivery_time" data-day="${day.value.toUpperCase()}" data-start_time="${
+        startTime.value
+      }" data-end_time="${endTime.value}"  />
+            <span class="radio-custom"></span>
+            <span>${deliveryLabel}</span>
+        </label>
+    `;
+      delivery_times_container.appendChild(newDeliveryTime);
+
+      document.getElementById("delivery_day").value = "";
+      document.getElementById("delivery_start_time").value = "";
+      document.getElementById("delivery_end_time").value = "";
+      add_new_time_form.style.display = "none";
+      add_new_time_tagline.style.display = "block";
+
+      attachRadioButtonListeners();
+    }
+  });
+
+  function attachRadioButtonListeners() {
+    const delivery_times_radio_buttons = document.querySelectorAll(
+      'input[name="delivery_time"]'
+    );
+    delivery_times_radio_buttons.forEach((radio) => {
+      radio.addEventListener("change", () => {
+        deliveryPreferences.forEach((pref) => {
+          pref.default = false;
+        });
+
+        const selectedDay = radio.getAttribute("data-day").toUpperCase();
+        const selectedStartTime = radio.getAttribute("data-start_time");
+        const selectedEndTime = radio.getAttribute("data-end_time");
+
+        const matchingIndex = Array.from(
+          delivery_times_radio_buttons
+        ).findIndex(
+          (rb) =>
+            rb.dataset.day === selectedDay &&
+            rb.dataset.start_time === selectedStartTime &&
+            rb.dataset.end_time === selectedEndTime
+        );
+
+        if (matchingIndex.length !== -1) {
+          deliveryPreferences[matchingIndex].default = true;
+        }
+        console.log(deliveryPreferences);
+      });
+    });
   }
+
+  attachRadioButtonListeners();
+
+  document.getElementById("registerButton").addEventListener("click", () => {
+    const firstNameError = document.getElementById("firstNameError");
+    const lastNameError = document.getElementById("lastNameError");
+    let primaryPhoneNumberError = document.getElementById(
+      "primaryPhoneNumberError"
+    );
+    firstNameError.textContent = "";
+    lastNameError.textContent = "";
+    primaryPhoneNumberError.textContent = "";
+
+    const firstName = document
+      .getElementById("register_first_name")
+      .value.trim();
+    const lastName = document.getElementById("register_last_name").value.trim();
+    const register_primary_phone_number_code = document
+      .getElementById("register_primary_phone_number_code")
+      .value.trim();
+    const register_primary_phone_number = document
+      .getElementById("register_primary_phone_number")
+      .value.trim();
+
+    let isValid = true;
+
+    if (!firstName) {
+      isValid = false;
+      document.getElementById("register_first_name").style.borderColor = "red";
+      firstNameError.textContent = "First name is required.";
+    } else {
+      document.getElementById("register_first_name").style.borderColor =
+        "rgb(223, 226, 232)";
+      firstNameError.textContent = "";
+    }
+
+    if (!lastName) {
+      isValid = false;
+      document.getElementById("register_last_name").style.borderColor = "red";
+      lastNameError.textContent = "Last name is required.";
+    } else {
+      document.getElementById("register_last_name").style.borderColor =
+        "rgb(223, 226, 232)";
+      lastNameError.textContent = "";
+    }
+
+    if (!register_primary_phone_number_code && !register_primary_phone_number) {
+      isValid = false;
+      document.getElementById(
+        "register_primary_phone_number_code"
+      ).style.borderColor = "red";
+      document.getElementById(
+        "register_primary_phone_number"
+      ).style.borderColor = "red";
+      primaryPhoneNumberError.textContent = "Primary phone number is required.";
+    } else {
+      document.getElementById(
+        "register_primary_phone_number_code"
+      ).style.borderColor = "rgb(223, 226, 232)";
+      document.getElementById(
+        "register_primary_phone_number"
+      ).style.borderColor = "rgb(223, 226, 232)";
+      primaryPhoneNumberError.textContent = "";
+    }
+
+    if (
+      document.getElementById("main-detail").style.display === "block" &&
+      firstName &&
+      lastName
+    ) {
+      register_tabs[1].click();
+    } else if (
+      document.getElementById("address-detail").style.display === "block"
+    ) {
+      register_tabs[2].click();
+    }
+  });
 
   const editAddressButton = document.querySelector("#edit-address-button");
 

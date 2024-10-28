@@ -34,6 +34,7 @@ function QCWC_includes_resources()
     //plugin styles
     wp_enqueue_style('QCWC-styles', plugins_url('assets/css/styles.css', __FILE__));
     wp_enqueue_style('poppins-font', 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+    wp_enqueue_style('fontawesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css', array(), '6.5.0');
 
     //plugin scripts
     wp_enqueue_script('QCWC-script', plugins_url('assets/js/script.js', __FILE__), array(), '1.1.0', true);
@@ -297,8 +298,8 @@ function QCWC_custom_checkout_popup()
         wp_localize_script('QCWC-script', 'popupData', array(
             'isTokenEmpty' => isset($user_id) ? empty($user_token) : "1",
             // 'userEmail' => wp_get_current_user()->user_email,
-            'userEmail' => isset($user_id) ? wp_get_current_user()->user_email : "",
-            // 'userEmail' => "admin@divistack.com",
+            // 'userEmail' => isset($user_id) ? wp_get_current_user()->user_email : "",
+            'userEmail' => "admin@divistack.com",
             'quick_c_checkout' => isset($_GET['quick-c-checkout']) && $_GET['quick-c-checkout'] === 'true',
         ));
     }
@@ -500,15 +501,169 @@ function QCWC_custom_popup_html()
                         <span class="errorText errorText1"></span>
                     </div>
                     <button id="authenticateButton" type="button"><span class="btn-text">Authenticate</span> <span class="btn-loader"></span> </button>
+                    <p class="register-account-para">Don't have an account? <span class="link">Register now</span></p>
                 </div>
-                <div class="verification-content" style="display: none;">
+                <div class="register-content" style="display: none;">
                     <img src="<?php echo plugins_url('assets/images/icon-logo.png', __FILE__); ?>" />
-                    <h2>Verification Required</h2>
-                    <p>Please select the verification option to verify</p>
-                    <div class="btns">
-                        <button id="verifyViaDeviceBtn" type="button"><span class="btn-text">Verify Via Device</span> <span class="btn-loader"></span></button>
-                        <button id="verifyViaOtp" type="button"><span class="btn-text">Verify Via OTP</span> <span class="btn-loader"></span></button>
+                    <h2>Register Account</h2>
+                    <div class="register-tabs">
+                        <div class="register-tab" data-target="main-detail">
+                            <div class="register-tab-icon-container">
+                                <i class="fa-solid fa-exclamation register-tab-icon"></i>
+                            </div>
+                            <h3 class="register-tab-text">Main Details</h3>
+                        </div>
+                        <div class="register-tab" data-target="address-detail">
+                            <div class="register-tab-icon-container">
+                                <i class="fa-solid fa-location-dot register-tab-icon"></i>
+                            </div>
+                            <h3 class="register-tab-text">Address</h3>
+                        </div>
+                        <div class="register-tab" data-target="delivery-time-detail">
+                            <div class="register-tab-icon-container">
+                                <i class="fa-regular fa-clock register-tab-icon"></i>
+                            </div>
+                            <h3 class="register-tab-text">Delivery Time</h3>
+                        </div>
+                        <div class="middle-line">
+                            <div class="middle-line-indicator"></div>
+                        </div>
                     </div>
+                    <div class="register-tabs-content">
+                        <div class="register-tab-content" id="main-detail">
+                            <div class="QCWC_form-groups">
+                                <div class="QCWC_form-group">
+                                    <label for="#register_first_name">First name</label>
+                                    <input type="text" id="register_first_name" placeholder="Enter your first name...">
+                                    <span class="error" id="firstNameError"></span>
+                                </div>
+                                <div class="QCWC_form-group">
+                                    <label for="#register_last_name">Last name</label>
+                                    <input type="text" id="register_last_name" placeholder="Enter your last name...">
+                                    <span class="error" id="lastNameError"></span>
+                                </div>
+                                <div class="QCWC_form-group">
+                                    <label for="#register_primary_phone_number">Primary</label>
+                                    <div class="QCWC_form-group-inputs">
+                                        <div class="QCWC_child-form-group">
+                                            <input type="text" id="register_primary_phone_number_code" placeholder="" value="+966">
+                                        </div>
+                                        <div class="QCWC_child-form-group">
+                                            <input type="number" id="register_primary_phone_number" placeholder="Enter phone number">
+                                        </div>
+                                    </div>
+                                    <span class="error" id="primaryPhoneNumberError"></span>
+                                </div>
+                                <div class="QCWC_form-group">
+                                    <label for="#register_secondary_phone_number">Secondary</label>
+                                    <div class="QCWC_form-group-inputs">
+                                        <div class="QCWC_child-form-group">
+                                            <input type="text" id="register_secondary_phone_number_code" placeholder="" value="+966">
+                                        </div>
+                                        <div class="QCWC_child-form-group">
+                                            <input type="number" id="register_secondary_phone_number" placeholder="Enter phone number">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="QCWC_form-group">
+                                    <label for="#register_email">Email address</label>
+                                    <input type="text" id="register_email" placeholder="Enter your email address...">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="register-tab-content" id="address-detail">
+                            <div class="QCWC_form-groups">
+                                <div class="QCWC_form-group">
+                                    <label for="#register_short_address">Short Address</label>
+                                    <input type="text" id="register_short_address" placeholder="e.g123123">
+                                </div>
+                                <div class="QCWC_form-group">
+                                    <label for="#register_primary_address">Primary Address</label>
+                                    <input type="text" id="register_primary_address" placeholder="Enter your primary address">
+                                </div>
+                                <div class="QCWC_form-group">
+                                    <div class="QCWC_form-group-inputs">
+                                        <div class="QCWC_child-form-group">
+                                            <label for="#register_secondary_phone_number">Building No</label>
+                                            <input type="text" id="register_building_number" placeholder="e.g123123">
+                                        </div>
+                                        <div class="QCWC_child-form-group">
+                                            <label for="#register_street_name">Street Name</label>
+                                            <input type="text" id="register_street_name" placeholder="e.g. Hello Street">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="QCWC_form-group">
+                                    <div class="QCWC_form-group-inputs">
+                                        <div class="QCWC_child-form-group">
+                                            <label for="#register_secondary">Secondary</label>
+                                            <input type="text" id="register_secondary" placeholder="e.g123123">
+                                        </div>
+                                        <div class="QCWC_child-form-group">
+                                            <label for="#register_district">District</label>
+                                            <input type="text" id="register_district" placeholder="e.g. Hello District">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="QCWC_form-group">
+                                    <div class="QCWC_form-group-inputs">
+                                        <div class="QCWC_child-form-group">
+                                            <label for="#register_postal_code">Postal Code</label>
+                                            <input type="number" id="register_postal_code" placeholder="">
+                                        </div>
+                                        <div class="QCWC_child-form-group">
+                                            <label for="#register_city">City</label>
+                                            <input type="text" id="register_city" placeholder="City">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="register-tab-content" id="delivery-time-detail">
+                            <div class="delivery-times">
+                                <div class="delivery-time">
+                                    <label class="custom-radio">
+                                        <input type="radio" name="delivery_time" data-day="MORNING" data-start_time="09:00:00" data-end_time="10:00:00" />
+                                        <span class="radio-custom"></span>
+                                        <span>MORNING ( 09:00:00 - 10:00:00 )</span>
+                                </div>
+                            </div>
+                            <p class="add-new-delivery-time-tagline">+ Add New Time</p>
+                            <div class="add-new-delivery-time-form">
+                                <div class="QCWC_delivery-time-form-groups">
+                                    <div class="QCWC_form-group">
+                                        <label for="#delivery_day">Day</label>
+                                        <input type="text" id="delivery_day" placeholder="Day">
+                                    </div>
+                                    <div class="QCWC_form-group">
+                                        <label for="#delivery_start_time">Start Time</label>
+                                        <input type="time" id="delivery_start_time" placeholder="">
+                                    </div>
+                                    <div class="QCWC_form-group">
+                                        <label for="#delivery_end_time">End Time</label>
+                                        <input type="time" id="delivery_end_time" placeholder="">
+                                    </div>
+                                </div>
+                                <div class="btns">
+                                    <button id="cancel_delivery_time" type="button"><span class="btn-text">Cancel Time</span></button>
+                                    <button id="add_delivery_time" type="button"><span class="btn-text">Add Time</span></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="registerButton" type="button"><span class="btn-text">Continue</span> <span class="btn-loader"></span> </button>
+                    <p class="login-account-para">Already have an account? <span class="link">Login now</span></p>
+                </div>
+            </div>
+            <div class="verification-content" style="display: none;">
+                <img src="<?php echo plugins_url('assets/images/icon-logo.png', __FILE__); ?>" />
+                <h2>Verification Required</h2>
+                <p>Please select the verification option to verify</p>
+                <div class="btns">
+                    <button id="verifyViaDeviceBtn" type="button"><span class="btn-text">Verify Via Device</span> <span class="btn-loader"></span></button>
+                    <button id="verifyViaOtp" type="button"><span class="btn-text">Verify Via OTP</span> <span class="btn-loader"></span></button>
+                    /div>
+                    <p class="register-account-para">Don't have an account? <span class="link">Register now</span></p>
                 </div>
                 <div class="otp-content" style="display: none;">
                     <img src="<?php echo plugins_url('assets/images/icon-logo.png', __FILE__); ?>" />
@@ -521,6 +676,7 @@ function QCWC_custom_popup_html()
                         </div>
                         <button id="verifyOtpButton" type="button"><span class="btn-text">Submit</span> <span class="btn-loader"></span></button>
                     </div>
+                    <p class="register-account-para">Don't have an account? <span class="link">Register now</span></p>
                 </div>
             </div>
         </div>
