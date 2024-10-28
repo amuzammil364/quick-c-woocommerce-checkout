@@ -108,6 +108,16 @@
   overflow-y: scroll;
 }
 
+.QCWC_loginModal .QCWC_modal-content::-webkit-scrollbar {
+  width: 2px;
+  background-color: transparent;
+}
+
+.QCWC_loginModal .QCWC_modal-content::-webkit-scrollbar-thumb {
+  width: 2px;
+  background-color: #252525;
+}
+
 .QCWC_addressesModal .QCWC_modal-content {
   background-color: #fff;
   max-width: 480px;
@@ -673,6 +683,7 @@ button[name="calc_shipping"]:hover::after {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
 }
 
 .QCWC_loginModal .register-content .register-tabs .register-tab h3 {
@@ -766,7 +777,7 @@ button[name="calc_shipping"]:hover::after {
   .QCWC_form-groups
   .QCWC_form-group-inputs {
   display: flex;
-  align-items: center;
+  align-items: start;
   justify-content: space-between;
   width: 100%;
 }
@@ -798,6 +809,15 @@ button[name="calc_shipping"]:hover::after {
   cursor: pointer;
 }
 
+.QCWC_loginModal .add-new-address-tagline {
+  text-align: right !important;
+  width: 100% !important;
+  font-size: 16px !important;
+  color: #252525 !important;
+  margin: 16px 0;
+  cursor: pointer;
+}
+
 .QCWC_loginModal .add-new-delivery-time-form {
   display: none;
   margin-top: 30px;
@@ -807,6 +827,12 @@ button[name="calc_shipping"]:hover::after {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 12px;
+}
+
+.QCWC_loginModal .addresses .address {
+  border-bottom: 1px solid #e9e9e9;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
 }
 
 .QCWC_loginModal .delivery-times {

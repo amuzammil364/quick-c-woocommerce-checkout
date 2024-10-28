@@ -151,7 +151,7 @@ function qcwc_add_admin_menu()
 
 function qcwc_settings_page_content()
 {
-    ?>
+?>
     <div class="wrap">
         <h1>Quick C Settings</h1>
         <?php
@@ -165,7 +165,7 @@ function qcwc_settings_page_content()
             ?>
         </form>
     </div>
-    <?php
+<?php
 }
 
 
@@ -242,7 +242,6 @@ function QCWC_woocommerce_plugin_activate()
 
     $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/platform/register/');
     $response = $api_handler->registerPlatForm($platform, $root_domain, $description, $ip_address);
-
 }
 
 function get_root_domain($domain)
@@ -303,7 +302,6 @@ function QCWC_custom_checkout_popup()
             'quick_c_checkout' => isset($_GET['quick-c-checkout']) && $_GET['quick-c-checkout'] === 'true',
         ));
     }
-
 }
 add_action('wp_enqueue_scripts', 'QCWC_custom_checkout_popup');
 
@@ -445,7 +443,7 @@ add_action('woocommerce_after_cart_totals', 'qcwc_add_custom_cart_button', 10);
 function qcwc_add_custom_cart_button()
 {
     $checkout_url = wc_get_checkout_url() . '?quick-c-checkout=true';
-    ?>
+?>
     <div class="wc-proceed-to-checkout">
         <a href="<?php echo esc_url($checkout_url); ?>" class="qcwc-cart-button">Quick c checkout</a>
     </div>
@@ -487,7 +485,7 @@ add_action('woocommerce_before_order_notes', 'display_delivery_preferences_check
 function QCWC_custom_popup_html()
 {
     if (is_checkout()) {
-        ?>
+    ?>
         <div id="QCWC_loginModal" class="QCWC_loginModal" style="display: none;">
             <div class="QCWC_modal-content">
                 <p class="message"><span class="text"></span><span class="qcwc_loader"></span></p>
@@ -550,9 +548,9 @@ function QCWC_custom_popup_html()
                                         </div>
                                         <div class="QCWC_child-form-group">
                                             <input type="number" id="register_primary_phone_number" placeholder="Enter phone number">
+                                            <span class="error" id="primaryPhoneNumberError"></span>
                                         </div>
                                     </div>
-                                    <span class="error" id="primaryPhoneNumberError"></span>
                                 </div>
                                 <div class="QCWC_form-group">
                                     <label for="#register_secondary_phone_number">Secondary</label>
@@ -562,68 +560,27 @@ function QCWC_custom_popup_html()
                                         </div>
                                         <div class="QCWC_child-form-group">
                                             <input type="number" id="register_secondary_phone_number" placeholder="Enter phone number">
+                                            <span class="error" id="secondaryPhoneNumberError"></span>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="QCWC_form-group">
                                     <label for="#register_email">Email address</label>
                                     <input type="text" id="register_email" placeholder="Enter your email address...">
+                                    <span class="error" id="emailError"></span>
                                 </div>
                             </div>
                         </div>
                         <div class="register-tab-content" id="address-detail">
-                            <div class="QCWC_form-groups">
-                                <div class="QCWC_form-group">
-                                    <label for="#register_short_address">Short Address</label>
-                                    <input type="text" id="register_short_address" placeholder="e.g123123">
-                                </div>
-                                <div class="QCWC_form-group">
-                                    <label for="#register_primary_address">Primary Address</label>
-                                    <input type="text" id="register_primary_address" placeholder="Enter your primary address">
-                                </div>
-                                <div class="QCWC_form-group">
-                                    <div class="QCWC_form-group-inputs">
-                                        <div class="QCWC_child-form-group">
-                                            <label for="#register_secondary_phone_number">Building No</label>
-                                            <input type="text" id="register_building_number" placeholder="e.g123123">
-                                        </div>
-                                        <div class="QCWC_child-form-group">
-                                            <label for="#register_street_name">Street Name</label>
-                                            <input type="text" id="register_street_name" placeholder="e.g. Hello Street">
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="QCWC_form-group">
-                                    <div class="QCWC_form-group-inputs">
-                                        <div class="QCWC_child-form-group">
-                                            <label for="#register_secondary">Secondary</label>
-                                            <input type="text" id="register_secondary" placeholder="e.g123123">
-                                        </div>
-                                        <div class="QCWC_child-form-group">
-                                            <label for="#register_district">District</label>
-                                            <input type="text" id="register_district" placeholder="e.g. Hello District">
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="QCWC_form-group">
-                                    <div class="QCWC_form-group-inputs">
-                                        <div class="QCWC_child-form-group">
-                                            <label for="#register_postal_code">Postal Code</label>
-                                            <input type="number" id="register_postal_code" placeholder="">
-                                        </div>
-                                        <div class="QCWC_child-form-group">
-                                            <label for="#register_city">City</label>
-                                            <input type="text" id="register_city" placeholder="City">
-                                        </div>
-                                    </div>
-                                </div>
+                            <div class="addresses">
                             </div>
+                            <p class="add-new-address-tagline">+ Add New Address</p>
                         </div>
                         <div class="register-tab-content" id="delivery-time-detail">
                             <div class="delivery-times">
                                 <div class="delivery-time">
                                     <label class="custom-radio">
-                                        <input type="radio" name="delivery_time" data-day="MORNING" data-start_time="09:00:00" data-end_time="10:00:00" />
+                                        <input type="radio" name="delivery_time" data-day="MORNING" data-start_time="09:00:00" data-end_time="10:00:00" checked />
                                         <span class="radio-custom"></span>
                                         <span>MORNING ( 09:00:00 - 10:00:00 )</span>
                                 </div>
@@ -680,7 +637,7 @@ function QCWC_custom_popup_html()
                 </div>
             </div>
         </div>
-        <?php
+    <?php
     }
 }
 add_action('wp_footer', 'QCWC_custom_popup_html');
@@ -693,7 +650,7 @@ function QCWC_custom_addresses_html()
     $check_user_token = empty($user_token);
 
     if (is_checkout() && $check_user_token !== "1") {
-        ?>
+    ?>
         <div id="QCWC_addressesModal" class="QCWC_addressesModal">
             <div class="QCWC_modal-content">
                 <p class="error-message error-message1"></p>
@@ -720,7 +677,7 @@ function QCWC_custom_addresses_html()
                 </div>
             </div>
         </div>
-        <?php
+    <?php
     }
 }
 
@@ -735,7 +692,7 @@ function QCWC_custom_delivery_prefences_html()
     $check_user_token = empty($user_token);
 
     if (is_checkout() && $check_user_token !== "1") {
-        ?>
+    ?>
         <div id="QCWC_prefencesModal" class="QCWC_prefencesModal">
             <div class="QCWC_modal-content">
                 <p class="error-message error-message2"></p>
@@ -756,7 +713,7 @@ function QCWC_custom_delivery_prefences_html()
                 </div>
             </div>
         </div>
-        <?php
+<?php
     }
 }
 
@@ -870,7 +827,6 @@ function QCWC_check_api_key()
 
         if (!is_user_logged_in()) {
             if (isset($response['status_code']) && $response['status_code'] == 404) {
-
             }
         }
 

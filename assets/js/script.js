@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
   console.log("Main Js Loaded!");
+  const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   let successMessage = document.querySelector(".QCWC_modal-content .message");
   let successMessageText = document.querySelector(
     ".QCWC_modal-content .message .text"
@@ -36,6 +37,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const add_new_time_tagline = document.querySelector(
     ".add-new-delivery-time-tagline"
   );
+  const add_new_address_tagline = document.querySelector(
+    ".add-new-address-tagline"
+  );
+  let addressContainer = document.querySelector(".addresses");
   const add_new_time_form = document.querySelector(
     ".add-new-delivery-time-form"
   );
@@ -44,13 +49,28 @@ document.addEventListener("DOMContentLoaded", () => {
     "cancel_delivery_time"
   );
   const delivery_times_container = document.querySelector(".delivery-times");
+  const firstName = document.getElementById("register_first_name");
+  const lastName = document.getElementById("register_last_name");
+  const register_primary_phone_number_code = document.getElementById(
+    "register_primary_phone_number_code"
+  );
+  const register_primary_phone_number = document.getElementById(
+    "register_primary_phone_number"
+  );
+  const register_secondary_phone_number = document.getElementById(
+    "register_secondary_phone_number"
+  );
+  const register_email = document.getElementById("register_email");
   let deliveryPreferences = [
     {
       day: "MORNING",
       start_time: "09:00:00",
       end_time: "10:00:00",
+      default: true,
     },
   ];
+  let addresses = [];
+  let addressCounter = 1;
   email.value = popupData.userEmail;
 
   if (
@@ -91,9 +111,67 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  register_tabs.forEach((register_tab) => {
+  register_tabs.forEach((register_tab, index) => {
     const register_tab_attr = register_tab.getAttribute("data-target");
     register_tab.addEventListener("click", () => {
+      if (index === 1) {
+        if (
+          firstName.value == "" ||
+          lastName.value == "" ||
+          register_primary_phone_number_code.value == "" ||
+          register_primary_phone_number.value == "" ||
+          register_secondary_phone_number.value == "" ||
+          register_email.value == "" ||
+          !emailPattern.test(register_email.value)
+        ) {
+          return;
+        }
+      }
+
+      if (index === 2) {
+        let validationError = false;
+        addresses.forEach((address) => {
+          const short_address = document.getElementById(
+            `register_short_address_${address.id}`
+          );
+          const primary_address = document.getElementById(
+            `register_primary_address_${address.id}`
+          );
+          const building_number = document.getElementById(
+            `register_building_number_${address.id}`
+          );
+          const street_name = document.getElementById(
+            `register_street_name_${address.id}`
+          );
+          const secondary = document.getElementById(
+            `register_secondary_${address.id}`
+          );
+          const district = document.getElementById(
+            `register_district_${address.id}`
+          );
+          const postal_code = document.getElementById(
+            `register_postal_code_${address.id}`
+          );
+          const city = document.getElementById(`register_city_${address.id}`);
+
+          if (
+            short_address.value == "" ||
+            primary_address.value == "" ||
+            building_number.value == "" ||
+            street_name.value == "" ||
+            secondary.value == "" ||
+            district.value == "" ||
+            postal_code.value == "" ||
+            city.value == ""
+          ) {
+            validationError = true;
+          }
+        });
+
+        if (validationError) {
+          return;
+        }
+      }
       register_tabs.forEach((tab) => tab.classList.remove("active"));
 
       register_tab.classList.add("active");
@@ -210,78 +288,318 @@ document.addEventListener("DOMContentLoaded", () => {
 
   attachRadioButtonListeners();
 
+  const createAddressForm = (unique_id, is_default = false) => {
+    const addressHtml = `
+        <div class="address" id="${unique_id}">
+          <div class="QCWC_form-groups">
+            <div class="QCWC_form-group">
+                <label for="#register_short_address">Short Address</label>
+                <input type="text" id="register_short_address_${unique_id}" placeholder="e.g123123">
+                <span class="error" id="shortAddressError_${unique_id}"></span>
+            </div>
+            <div class="QCWC_form-group">
+                <label for="#register_primary_address">Primary Address</label>
+                <input type="text" id="register_primary_address_${unique_id}" placeholder="Enter your primary address">
+                <span class="error" id="primaryAddressError_${unique_id}"></span>
+            </div>
+            <div class="QCWC_form-group">
+                <div class="QCWC_form-group-inputs">
+                    <div class="QCWC_child-form-group">
+                        <label for="#register_building_number">Building No</label>
+                        <input type="text" id="register_building_number_${unique_id}" placeholder="e.g123123">
+                    </div>
+                    <div class="QCWC_child-form-group">
+                        <label for="#register_street_name">Street Name</label>
+                        <input type="text" id="register_street_name_${unique_id}" placeholder="e.g. Hello Street">
+                        <span class="error" id="streetNameError_${unique_id}"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="QCWC_form-group">
+                <div class="QCWC_form-group-inputs">
+                    <div class="QCWC_child-form-group">
+                        <label for="#register_secondary">Secondary</label>
+                        <input type="text" id="register_secondary_${unique_id}" placeholder="e.g123123">
+                    </div>
+                    <div class="QCWC_child-form-group">
+                        <label for="#register_district">District</label>
+                        <input type="text" id="register_district_${unique_id}" placeholder="e.g. Hello District">
+                        <span class="error" id="districtError_${unique_id}"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="QCWC_form-group">
+                <div class="QCWC_form-group-inputs">
+                    <div class="QCWC_child-form-group">
+                        <label for="#register_postal_code">Postal Code</label>
+                        <input type="number" id="register_postal_code_${unique_id}" placeholder="">
+                    </div>
+                    <div class="QCWC_child-form-group">
+                        <label for="#register_city">City</label>
+                        <input type="text" id="register_city_${unique_id}" placeholder="City">
+                        <span class="error" id="cityError_${unique_id}"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="QCWC_form-group">
+                <label class="custom-radio">
+                    <input type="radio" name="defaultAddress" class="defaultAddress" data-id="${unique_id}" ${
+      is_default ? "checked" : ""
+    } />
+                    <span class="radio-custom"></span>
+                    <span>Set as Default National Address</span>
+                </label>
+            </div>
+          </div>
+        </div>
+    `;
+
+    addressContainer.insertAdjacentHTML("beforeend", addressHtml);
+
+    addresses.push({
+      id: unique_id,
+      short_address: "",
+      primary_address: "",
+      building_number: "",
+      street_name: "",
+      district: "",
+      postal_code: "",
+      city: "",
+      default: is_default,
+    });
+
+    const defaultAddressRadios = document.querySelectorAll(".defaultAddress");
+
+    defaultAddressRadios.forEach((radio) => {
+      radio.addEventListener("change", () => {
+        addresses.forEach((pref) => (pref.default = false));
+
+        const selectedId = radio.getAttribute("data-id");
+        const selectedAddress = addresses.find(
+          (pref) => pref.id === selectedId
+        );
+        if (selectedAddress) {
+          selectedAddress.default = true;
+        }
+        console.log(addresses);
+      });
+    });
+  };
+
+  createAddressForm(`address-default-${Date.now()}`, true);
+
+  add_new_address_tagline.addEventListener("click", () => {
+    const uniqueId = `address-${Date.now()}-${addressCounter++}`;
+    createAddressForm(uniqueId);
+  });
+
   document.getElementById("registerButton").addEventListener("click", () => {
     const firstNameError = document.getElementById("firstNameError");
     const lastNameError = document.getElementById("lastNameError");
-    let primaryPhoneNumberError = document.getElementById(
+    const primaryPhoneNumberError = document.getElementById(
       "primaryPhoneNumberError"
     );
+    const secondaryPhoneNumberError = document.getElementById(
+      "secondaryPhoneNumberError"
+    );
+    const emailError = document.getElementById("emailError");
     firstNameError.textContent = "";
     lastNameError.textContent = "";
     primaryPhoneNumberError.textContent = "";
-
-    const firstName = document
-      .getElementById("register_first_name")
-      .value.trim();
-    const lastName = document.getElementById("register_last_name").value.trim();
-    const register_primary_phone_number_code = document
-      .getElementById("register_primary_phone_number_code")
-      .value.trim();
-    const register_primary_phone_number = document
-      .getElementById("register_primary_phone_number")
-      .value.trim();
+    secondaryPhoneNumberError.textContent = "";
+    emailError.textContent = "";
 
     let isValid = true;
 
-    if (!firstName) {
-      isValid = false;
-      document.getElementById("register_first_name").style.borderColor = "red";
-      firstNameError.textContent = "First name is required.";
-    } else {
-      document.getElementById("register_first_name").style.borderColor =
-        "rgb(223, 226, 232)";
-      firstNameError.textContent = "";
-    }
+    if (document.getElementById("main-detail").style.display === "block") {
+      if (firstName.value == "") {
+        isValid = false;
+        document.getElementById("register_first_name").style.borderColor =
+          "red";
+        firstNameError.textContent = "First name is required.";
+      } else {
+        document.getElementById("register_first_name").style.borderColor =
+          "rgb(223, 226, 232)";
+        firstNameError.textContent = "";
+      }
 
-    if (!lastName) {
-      isValid = false;
-      document.getElementById("register_last_name").style.borderColor = "red";
-      lastNameError.textContent = "Last name is required.";
-    } else {
-      document.getElementById("register_last_name").style.borderColor =
-        "rgb(223, 226, 232)";
-      lastNameError.textContent = "";
-    }
+      if (lastName.value == "") {
+        isValid = false;
+        document.getElementById("register_last_name").style.borderColor = "red";
+        lastNameError.textContent = "Last name is required.";
+      } else {
+        document.getElementById("register_last_name").style.borderColor =
+          "rgb(223, 226, 232)";
+        lastNameError.textContent = "";
+      }
 
-    if (!register_primary_phone_number_code && !register_primary_phone_number) {
-      isValid = false;
-      document.getElementById(
-        "register_primary_phone_number_code"
-      ).style.borderColor = "red";
-      document.getElementById(
-        "register_primary_phone_number"
-      ).style.borderColor = "red";
-      primaryPhoneNumberError.textContent = "Primary phone number is required.";
-    } else {
-      document.getElementById(
-        "register_primary_phone_number_code"
-      ).style.borderColor = "rgb(223, 226, 232)";
-      document.getElementById(
-        "register_primary_phone_number"
-      ).style.borderColor = "rgb(223, 226, 232)";
-      primaryPhoneNumberError.textContent = "";
-    }
+      if (register_primary_phone_number_code.value == "") {
+        isValid = false;
+        document.getElementById(
+          "register_primary_phone_number_code"
+        ).style.borderColor = "red";
+      } else {
+        document.getElementById(
+          "register_primary_phone_number_code"
+        ).style.borderColor = "rgb(223, 226, 232)";
+      }
 
-    if (
-      document.getElementById("main-detail").style.display === "block" &&
-      firstName &&
-      lastName
-    ) {
+      if (register_primary_phone_number.value == "") {
+        isValid = false;
+        document.getElementById(
+          "register_primary_phone_number"
+        ).style.borderColor = "red";
+        primaryPhoneNumberError.textContent = "Phone number is required.";
+      } else {
+        document.getElementById(
+          "register_primary_phone_number"
+        ).style.borderColor = "rgb(223, 226, 232)";
+        primaryPhoneNumberError.textContent = "";
+      }
+
+      if (register_secondary_phone_number.value == "") {
+        isValid = false;
+        document.getElementById(
+          "register_secondary_phone_number"
+        ).style.borderColor = "red";
+        secondaryPhoneNumberError.textContent = "Phone number is required.";
+      } else {
+        document.getElementById(
+          "register_secondary_phone_number"
+        ).style.borderColor = "rgb(223, 226, 232)";
+        secondaryPhoneNumberError.textContent = "";
+      }
+
+      if (register_email.value == "") {
+        isValid = false;
+        document.getElementById("register_email").style.borderColor = "red";
+        emailError.textContent = "Email address is required.";
+      } else if (!emailPattern.test(register_email.value)) {
+        isValid = false;
+        document.getElementById("register_email").style.borderColor = "red";
+        emailError.textContent = "Valid email address is required.";
+      } else {
+        document.getElementById("register_email").style.borderColor =
+          "rgb(223, 226, 232)";
+        emailError.textContent = "";
+        isValid = false;
+      }
+
       register_tabs[1].click();
     } else if (
       document.getElementById("address-detail").style.display === "block"
     ) {
+      addresses.forEach((address) => {
+        const short_address = document.getElementById(
+          `register_short_address_${address.id}`
+        );
+        const primary_address = document.getElementById(
+          `register_primary_address_${address.id}`
+        );
+        const building_number = document.getElementById(
+          `register_building_number_${address.id}`
+        );
+        const street_name = document.getElementById(
+          `register_street_name_${address.id}`
+        );
+        const secondary = document.getElementById(
+          `register_secondary_${address.id}`
+        );
+        const district = document.getElementById(
+          `register_district_${address.id}`
+        );
+        const postal_code = document.getElementById(
+          `register_postal_code_${address.id}`
+        );
+        const city = document.getElementById(`register_city_${address.id}`);
+
+        const short_address_error = document.getElementById(
+          `shortAddressError_${address.id}`
+        );
+        const primary_address_error = document.getElementById(
+          `primaryAddressError_${address.id}`
+        );
+        const street_name_error = document.getElementById(
+          `streetNameError_${address.id}`
+        );
+        const district_error = document.getElementById(
+          `districtError_${address.id}`
+        );
+        const city_error = document.getElementById(`cityError_${address.id}`);
+
+        short_address_error.textContent = "";
+        primary_address_error.textContent = "";
+
+        if (short_address.value == "") {
+          isValid = false;
+          short_address.style.borderColor = "red";
+          short_address_error.textContent = "Short address is required.";
+        } else {
+          short_address.style.borderColor = "rgb(223, 226, 232)";
+          short_address_error.textContent = "";
+        }
+
+        if (primary_address.value == "") {
+          isValid = false;
+          primary_address.style.borderColor = "red";
+          primary_address_error.textContent = "Primary address is required.";
+        } else {
+          primary_address.style.borderColor = "rgb(223, 226, 232)";
+          primary_address_error.textContent = "";
+        }
+
+        if (building_number.value == "") {
+          isValid = false;
+          building_number.style.borderColor = "red";
+        } else {
+          building_number.style.borderColor = "rgb(223, 226, 232)";
+        }
+
+        if (street_name.value == "") {
+          isValid = false;
+          street_name.style.borderColor = "red";
+          street_name_error.textContent = "Street name is required.";
+        } else {
+          street_name.style.borderColor = "rgb(223, 226, 232)";
+          street_name_error.textContent = "";
+        }
+
+        if (secondary.value == "") {
+          isValid = false;
+          secondary.style.borderColor = "red";
+        } else {
+          secondary.style.borderColor = "rgb(223, 226, 232)";
+        }
+
+        if (district.value == "") {
+          isValid = false;
+          district.style.borderColor = "red";
+          district_error.textContent = "District is required.";
+        } else {
+          district.style.borderColor = "rgb(223, 226, 232)";
+          district_error.textContent = "";
+        }
+
+        if (postal_code.value == "") {
+          isValid = false;
+          postal_code.style.borderColor = "red";
+        } else {
+          postal_code.style.borderColor = "rgb(223, 226, 232)";
+        }
+
+        if (city.value == "") {
+          isValid = false;
+          city.style.borderColor = "red";
+          city_error.textContent = "City is required.";
+        } else {
+          city.style.borderColor = "rgb(223, 226, 232)";
+          city_error.textContent = "";
+        }
+      });
       register_tabs[2].click();
+    } else if (
+      document.getElementById("delivery-time-detail").style.display === "block"
+    ) {
     }
   });
 
