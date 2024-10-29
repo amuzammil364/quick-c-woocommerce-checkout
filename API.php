@@ -8,6 +8,46 @@ class API_Handler
         $this->api_url = $url;
     }
 
+
+    public function registerUser($first_name, $last_name, $email, $primary_contact, $secondary_contact, $addresses, $delivery_preferences, $root_domain)
+    {
+        $data = array(
+            "first_name" => $first_name,
+            "last_name" => $last_name,
+            "email" => $email,
+            "profile" => array(
+                "primary_contact" => $primary_contact,
+                "secondary_contact" => $secondary_contact,
+            ),
+            "addresses" => $addresses,
+            "delivery_preferences" => $delivery_preferences,
+            "domain" => $root_domain
+        );
+
+        $json_data = json_encode($data);
+
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $this->api_url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $json_data);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            'Content-Type: application/json',
+        ));
+
+        $response = curl_exec($ch);
+
+        if (curl_errno($ch)) {
+            return false;
+        }
+
+        curl_close($ch);
+
+        $response_data = json_decode($response, true);
+        return $response_data;
+    }
+
     public function authenticate($email, $domain, $platform, $verifyMethod)
     {
 
@@ -122,6 +162,34 @@ class API_Handler
             'Authorization: JWT ' . $token
         ]);
 
+
+        $response = curl_exec($ch);
+
+        if (curl_errno($ch)) {
+            return false;
+        }
+
+        curl_close($ch);
+
+        $response_data = json_decode($response, true);
+        return $response_data;
+    }
+
+    public function getShortAddresses($short_address)
+    {
+
+        $url = sprintf(
+            '%s?short_address=%s',
+            $this->api_url,
+            urlencode($short_address),
+        );
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+        ]);
 
         $response = curl_exec($ch);
 

@@ -60,13 +60,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const register_secondary_phone_number = document.getElementById(
     "register_secondary_phone_number"
   );
+  const register_secondary_phone_number_code = document.getElementById(
+    "register_secondary_phone_number_code"
+  );
   const register_email = document.getElementById("register_email");
   let deliveryPreferences = [
     {
       day: "MORNING",
       start_time: "09:00:00",
       end_time: "10:00:00",
-      default: true,
+      is_primary: true,
     },
   ];
   let addresses = [];
@@ -80,10 +83,10 @@ document.addEventListener("DOMContentLoaded", () => {
   ) {
     document.getElementById("QCWC_loginModal").style.display = "flex";
     document.body.style.overflow = "hidden";
-    document.querySelector(".login-content").style.display = "none";
+    document.querySelector(".login-content").style.display = "block";
     document.querySelector(".verification-content").style.display = "none";
     document.querySelector(".otp-content").style.display = "none";
-    document.querySelector(".register-content").style.display = "block";
+    document.querySelector(".register-content").style.display = "none";
   }
 
   register_account_paras.forEach((account_para) => {
@@ -94,9 +97,9 @@ document.addEventListener("DOMContentLoaded", () => {
       document.querySelector(".otp-content").style.display = "none";
       document.querySelector(".register-content").style.display = "block";
       login_account_para.style.display = "block";
-      register_account_paras.forEach((account_para) => {
-        account_para.styles.display = "none";
-      });
+      register_account_paras.forEach(
+        (account_para) => (account_para.style.display = "none")
+      );
     });
   });
 
@@ -106,9 +109,9 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelector(".otp-content").style.display = "none";
     document.querySelector(".register-content").style.display = "none";
     login_account_para.style.display = "none";
-    register_account_paras.forEach((account_para) => {
-      account_para.styles.display = "block";
-    });
+    register_account_paras.forEach(
+      (account_para) => (account_para.style.display = "block")
+    );
   });
 
   register_tabs.forEach((register_tab, index) => {
@@ -121,6 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
           register_primary_phone_number_code.value == "" ||
           register_primary_phone_number.value == "" ||
           register_secondary_phone_number.value == "" ||
+          register_secondary_phone_number_code.value == "" ||
           register_email.value == "" ||
           !emailPattern.test(register_email.value)
         ) {
@@ -224,7 +228,7 @@ document.addEventListener("DOMContentLoaded", () => {
         day: day.value.toUpperCase(),
         start_time: startTime.value,
         end_time: endTime.value,
-        default: false,
+        is_primary: false,
       };
 
       deliveryPreferences.push(deliveryPreference);
@@ -262,7 +266,7 @@ document.addEventListener("DOMContentLoaded", () => {
     delivery_times_radio_buttons.forEach((radio) => {
       radio.addEventListener("change", () => {
         deliveryPreferences.forEach((pref) => {
-          pref.default = false;
+          pref.is_primary = false;
         });
 
         const selectedDay = radio.getAttribute("data-day").toUpperCase();
@@ -279,7 +283,7 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         if (matchingIndex.length !== -1) {
-          deliveryPreferences[matchingIndex].default = true;
+          deliveryPreferences[matchingIndex].is_primary = true;
         }
         console.log(deliveryPreferences);
       });
@@ -288,7 +292,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
   attachRadioButtonListeners();
 
+  function debounce(func, delay) {
+    let timeout;
+    return function (...args) {
+      const context = this;
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(context, args), delay);
+    };
+  }
+
   const createAddressForm = (unique_id, is_default = false) => {
+    const removeButtonHtml = !is_default
+      ? `<div class="QCWC_form-group">
+         <button class="delete-address-button" data-id="${unique_id}">
+           Remove Address
+         </button>
+       </div>`
+      : "";
+
     const addressHtml = `
         <div class="address" id="${unique_id}">
           <div class="QCWC_form-groups">
@@ -296,6 +317,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 <label for="#register_short_address">Short Address</label>
                 <input type="text" id="register_short_address_${unique_id}" placeholder="e.g123123">
                 <span class="error" id="shortAddressError_${unique_id}"></span>
+                <span class="input-loader"></span>
+                <div class="dropdown-suggestions" id="dropdown_${unique_id}" style="display: none;">
+                </div>
             </div>
             <div class="QCWC_form-group">
                 <label for="#register_primary_address">Primary Address</label>
@@ -341,6 +365,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                 </div>
             </div>
+            ${removeButtonHtml}
             <div class="QCWC_form-group">
                 <label class="custom-radio">
                     <input type="radio" name="defaultAddress" class="defaultAddress" data-id="${unique_id}" ${
@@ -362,27 +387,159 @@ document.addEventListener("DOMContentLoaded", () => {
       primary_address: "",
       building_number: "",
       street_name: "",
+      secondary: "",
       district: "",
       postal_code: "",
       city: "",
-      default: is_default,
+      is_primary: is_default,
     });
+
+    const addressObject = addresses.find((address) => address.id === unique_id);
+
+    const updateAddressField = (field, value) => {
+      if (addressObject) {
+        addressObject[field] = value;
+      }
+    };
+
+    document
+      .getElementById(`register_short_address_${unique_id}`)
+      .addEventListener("input", (e) => {
+        updateAddressField("short_address", e.target.value);
+        debouncedSearchShortAddress(e.target.value);
+      });
+    document
+      .getElementById(`register_primary_address_${unique_id}`)
+      .addEventListener("input", (e) => {
+        updateAddressField("primary_address", e.target.value);
+      });
+    document
+      .getElementById(`register_building_number_${unique_id}`)
+      .addEventListener("input", (e) => {
+        updateAddressField("building_number", e.target.value);
+      });
+    document
+      .getElementById(`register_street_name_${unique_id}`)
+      .addEventListener("input", (e) => {
+        updateAddressField("street_name", e.target.value);
+      });
+    document
+      .getElementById(`register_secondary_${unique_id}`)
+      .addEventListener("input", (e) => {
+        updateAddressField("secondary", e.target.value);
+      });
+    document
+      .getElementById(`register_district_${unique_id}`)
+      .addEventListener("input", (e) => {
+        updateAddressField("district", e.target.value);
+      });
+    document
+      .getElementById(`register_postal_code_${unique_id}`)
+      .addEventListener("input", (e) => {
+        updateAddressField("postal_code", e.target.value);
+      });
+    document
+      .getElementById(`register_city_${unique_id}`)
+      .addEventListener("input", (e) => {
+        updateAddressField("city", e.target.value);
+      });
 
     const defaultAddressRadios = document.querySelectorAll(".defaultAddress");
 
     defaultAddressRadios.forEach((radio) => {
       radio.addEventListener("change", () => {
-        addresses.forEach((pref) => (pref.default = false));
+        addresses.forEach((pref) => (pref.is_primary = false));
 
         const selectedId = radio.getAttribute("data-id");
         const selectedAddress = addresses.find(
           (pref) => pref.id === selectedId
         );
         if (selectedAddress) {
-          selectedAddress.default = true;
+          selectedAddress.is_primary = true;
         }
         console.log(addresses);
       });
+    });
+
+    if (!is_default) {
+      document
+        .querySelector(`#${unique_id} .delete-address-button`)
+        .addEventListener("click", () => {
+          document.getElementById(`${unique_id}`).remove();
+
+          addresses = addresses.filter((address) => address.id !== unique_id);
+          console.log(addresses);
+        });
+    }
+
+    const debouncedSearchShortAddress = debounce((value) => {
+      searchShortAddress(value);
+    }, 300);
+
+    const inputField = document.getElementById(
+      `register_short_address_${unique_id}`
+    );
+    const dropdown = document.getElementById(`dropdown_${unique_id}`);
+
+    function searchShortAddress(value) {
+      const input_loader = document.querySelector(".input-loader");
+      const data = {
+        action: "search_short_address",
+        value: value,
+      };
+
+      input_loader.style.display = "block";
+
+      jQuery.ajax({
+        url: ajaxurl,
+        type: "GET",
+        data: data,
+        success: function (response) {
+          const dropdown = document.getElementById(`dropdown_${unique_id}`);
+          dropdown.innerHTML = "";
+
+          if (
+            response.data?.Addresses &&
+            response.data?.Addresses?.length > 0
+          ) {
+            dropdown.style.display = "block";
+
+            response.data.Addresses.forEach((item) => {
+              const suggestionItem = document.createElement("div");
+              suggestionItem.classList.add("suggestion-item");
+              suggestionItem.textContent = `${item.BuildingNumber} ${item.Street}`;
+              suggestionItem.addEventListener("click", () => {
+                document.getElementById(
+                  `register_short_address_${unique_id}`
+                ).value = item.BuildingNumber;
+                dropdown.style.display = "none";
+              });
+              dropdown.appendChild(suggestionItem);
+              input_loader.style.display = "none";
+            });
+          } else {
+            dropdown.style.display = "block";
+
+            const suggestionItem = document.createElement("div");
+            suggestionItem.classList.add("suggestion-item");
+            suggestionItem.classList.add("not-found");
+            suggestionItem.textContent = "No address found!";
+
+            dropdown.appendChild(suggestionItem);
+            input_loader.style.display = "none";
+          }
+        },
+        error: function () {
+          alert("There was an error with the request.");
+          input_loader.style.display = "none";
+        },
+      });
+    }
+
+    document.addEventListener("click", (event) => {
+      if (!dropdown.contains(event.target) && event.target !== inputField) {
+        dropdown.style.display = "none";
+      }
     });
   };
 
@@ -468,6 +625,17 @@ document.addEventListener("DOMContentLoaded", () => {
           "register_secondary_phone_number"
         ).style.borderColor = "rgb(223, 226, 232)";
         secondaryPhoneNumberError.textContent = "";
+      }
+
+      if (register_secondary_phone_number_code.value == "") {
+        isValid = false;
+        document.getElementById(
+          "register_secondary_phone_number_code"
+        ).style.borderColor = "red";
+      } else {
+        document.getElementById(
+          "register_secondary_phone_number_code"
+        ).style.borderColor = "rgb(223, 226, 232)";
       }
 
       if (register_email.value == "") {
@@ -600,6 +768,68 @@ document.addEventListener("DOMContentLoaded", () => {
     } else if (
       document.getElementById("delivery-time-detail").style.display === "block"
     ) {
+      const btnLoader = document.querySelector(".register-btn-loader");
+      const btnText = document.querySelector(".register-btn-text");
+
+      btnLoader.style.display = "block";
+      btnText.style.display = "none";
+      let data = {
+        action: "register_user",
+        first_name: firstName.value,
+        last_name: lastName.value,
+        email: register_email.value,
+        profile: {
+          primary_contact:
+            register_primary_phone_number_code.value +
+            "" +
+            register_primary_phone_number.value,
+          secondary_contact:
+            register_secondary_phone_number_code.value +
+            "" +
+            register_secondary_phone_number.value,
+        },
+        addresses: addresses,
+        delivery_preferences: deliveryPreferences,
+      };
+
+      jQuery.ajax({
+        url: ajaxurl,
+        type: "POST",
+        data: data,
+        success: function (response) {
+          if (response.success) {
+            successMessage.classList.add("active");
+            successMessageText.innerHTML =
+              "User registered successfully please wait.";
+            errorMessage.classList.remove("active");
+            errorMessage.innerHTML = "";
+            btnLoader.style.display = "none";
+            btnText.style.display = "block";
+            fetchUserDetails(register_email.value);
+            savePrimaryUserDetail(register_email.value);
+          } else {
+            successMessage.classList.remove("active");
+            successMessageText.innerHTML = "";
+            errorMessage.classList.add("active");
+            if (response.errors.profile) {
+              errorMessage.innerHTML =
+                response.errors.profile.primary_contact[0];
+            }
+
+            if (response.errors.email) {
+              errorMessage.innerHTML = response.errors.email[0];
+            }
+            btnLoader.style.display = "none";
+            btnText.style.display = "block";
+          }
+          btnLoader.style.display = "none";
+          btnText.style.display = "block";
+        },
+        error: function () {
+          btnLoader.style.display = "none";
+          btnText.style.display = "block";
+        },
+      });
     }
   });
 
@@ -1000,6 +1230,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ) {
           stopApiKeyCheck();
           document.querySelector(".login-content").style.display = "none";
+          document.querySelector(".register-content").style.display = "none";
           document.querySelector(".verification-content").style.display =
             "block";
           document.querySelector(".otp-content").style.display = "none";

@@ -775,6 +775,33 @@ button[name="calc_shipping"]:hover::after {
   .register-content
   .register-tabs-content
   .QCWC_form-groups
+  .QCWC_form-group {
+  position: relative;
+}
+
+.QCWC_loginModal
+  .register-content
+  .register-tabs-content
+  .QCWC_form-groups
+  .QCWC_form-group
+  .input-loader {
+  position: absolute;
+  top: 50%;
+  right: 22px;
+  width: 23px;
+  height: 23px;
+  border: 2px solid #252525;
+  border-top-color: #fff;
+  border-right-color: #fff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  display: none;
+}
+
+.QCWC_loginModal
+  .register-content
+  .register-tabs-content
+  .QCWC_form-groups
   .QCWC_form-group-inputs {
   display: flex;
   align-items: start;
@@ -861,4 +888,59 @@ button[name="calc_shipping"]:hover::after {
 
 .QCWC_loginModal .add-new-delivery-time-form .btns button:nth-child(2) {
   border-radius: 8px;
+}
+
+.QCWC_loginModal .delete-address-button {
+  background-color: transparent !important;
+  border: none !important;
+  color: red !important;
+  font-size: 14px !important;
+  cursor: pointer !important;
+  max-width: 160px !important;
+  width: 100% !important;
+  margin-left: auto !important;
+  padding: 0 !important;
+  margin-top: 0 !important;
+  margin-right: 0 !important;
+  margin-bottom: 0 !important;
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  font-weight: 400 !important;
+}
+
+.QCWC_loginModal .dropdown-suggestions {
+  position: absolute;
+  bottom: -70%;
+  left: 0;
+  width: 100%;
+  background-color: #fff;
+  box-shadow: 0 5px 6px 0 rgba(0, 0, 0, 0.2);
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+  z-index: 2;
+}
+
+.QCWC_loginModal .dropdown-suggestions .suggestion-item {
+  padding: 14px 16px;
+  transition: 0.2s;
+  cursor: pointer;
+}
+
+.QCWC_loginModal .dropdown-suggestions .not-found {
+  cursor: default;
+  text-align: center;
+}
+
+.QCWC_loginModal .dropdown-suggestions .not-found:hover {
+  background-color: #fff !important;
+}
+
+.QCWC_loginModal .dropdown-suggestions .suggestion-item:hover {
+  background-color: #ebebebc7;
+}
+
+.QCWC_loginModal .dropdown-suggestions .suggestion-item:last-child {
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
 }

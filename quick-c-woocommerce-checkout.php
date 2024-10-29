@@ -151,7 +151,7 @@ function qcwc_add_admin_menu()
 
 function qcwc_settings_page_content()
 {
-?>
+    ?>
     <div class="wrap">
         <h1>Quick C Settings</h1>
         <?php
@@ -165,7 +165,7 @@ function qcwc_settings_page_content()
             ?>
         </form>
     </div>
-<?php
+    <?php
 }
 
 
@@ -443,7 +443,7 @@ add_action('woocommerce_after_cart_totals', 'qcwc_add_custom_cart_button', 10);
 function qcwc_add_custom_cart_button()
 {
     $checkout_url = wc_get_checkout_url() . '?quick-c-checkout=true';
-?>
+    ?>
     <div class="wc-proceed-to-checkout">
         <a href="<?php echo esc_url($checkout_url); ?>" class="qcwc-cart-button">Quick c checkout</a>
     </div>
@@ -485,7 +485,7 @@ add_action('woocommerce_before_order_notes', 'display_delivery_preferences_check
 function QCWC_custom_popup_html()
 {
     if (is_checkout()) {
-    ?>
+        ?>
         <div id="QCWC_loginModal" class="QCWC_loginModal" style="display: none;">
             <div class="QCWC_modal-content">
                 <p class="message"><span class="text"></span><span class="qcwc_loader"></span></p>
@@ -608,7 +608,7 @@ function QCWC_custom_popup_html()
                             </div>
                         </div>
                     </div>
-                    <button id="registerButton" type="button"><span class="btn-text">Continue</span> <span class="btn-loader"></span> </button>
+                    <button id="registerButton" type="button"><span class="register-btn-text">Continue</span> <span class="btn-loader register-btn-loader"></span> </button>
                     <p class="login-account-para">Already have an account? <span class="link">Login now</span></p>
                 </div>
             </div>
@@ -637,7 +637,7 @@ function QCWC_custom_popup_html()
                 </div>
             </div>
         </div>
-    <?php
+        <?php
     }
 }
 add_action('wp_footer', 'QCWC_custom_popup_html');
@@ -650,7 +650,7 @@ function QCWC_custom_addresses_html()
     $check_user_token = empty($user_token);
 
     if (is_checkout() && $check_user_token !== "1") {
-    ?>
+        ?>
         <div id="QCWC_addressesModal" class="QCWC_addressesModal">
             <div class="QCWC_modal-content">
                 <p class="error-message error-message1"></p>
@@ -677,7 +677,7 @@ function QCWC_custom_addresses_html()
                 </div>
             </div>
         </div>
-    <?php
+        <?php
     }
 }
 
@@ -692,7 +692,7 @@ function QCWC_custom_delivery_prefences_html()
     $check_user_token = empty($user_token);
 
     if (is_checkout() && $check_user_token !== "1") {
-    ?>
+        ?>
         <div id="QCWC_prefencesModal" class="QCWC_prefencesModal">
             <div class="QCWC_modal-content">
                 <p class="error-message error-message2"></p>
@@ -713,13 +713,86 @@ function QCWC_custom_delivery_prefences_html()
                 </div>
             </div>
         </div>
-<?php
+        <?php
     }
 }
 
 add_action('wp_footer', 'QCWC_custom_delivery_prefences_html');
 
 
+add_action('wp_ajax_register_user', 'QCWC_handle_register_user');
+add_action('wp_ajax_nopriv_register_user', 'QCWC_handle_register_user');
+
+function QCWC_handle_register_user()
+{
+
+    $first_name = isset($_POST['first_name']) ? sanitize_text_field($_POST['first_name']) : "";
+    $last_name = isset($_POST['last_name']) ? sanitize_text_field($_POST['last_name']) : "";
+    $email = isset($_POST['email']) ? sanitize_text_field($_POST['email']) : "";
+    $primary_contact = isset($_POST['profile']['primary_contact']) ? $_POST['profile']['primary_contact'] : "";
+    $secondary_contact = isset($_POST['profile']['secondary_contact']) ? $_POST['profile']['secondary_contact'] : "";
+    $addresses = isset($_POST['addresses']) ? $_POST['addresses'] : [];
+    $delivery_preferences = isset($_POST['delivery_preferences']) ? $_POST['delivery_preferences'] : [];
+
+    // $domain = $_SERVER['HTTP_HOST'];
+    // $root_domain = get_root_domain($domain);
+    $root_domain = "divistack.com";
+
+    $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/platform/register-user/');
+    $response = $api_handler->registerUser(first_name: $first_name, last_name: $last_name, email: $email, primary_contact: $primary_contact, secondary_contact: $secondary_contact, addresses: $addresses, delivery_preferences: $delivery_preferences, root_domain: $root_domain);
+
+    if ($response) {
+        if (isset($response['status_code']) && $response['status_code'] == 201) {
+            $api_key = $response['data']['api_key'];
+            $user = get_user_by('email', $email);
+
+            if (!$user) {
+                $username = sanitize_user($first_name . ' ' . $last_name);
+                $password = wp_generate_password();
+                $user_id = wp_create_user($username, $password, $email);
+
+                wp_update_user(array(
+                    'ID' => $user_id,
+                    'first_name' => $first_name,
+                    'last_name' => $last_name,
+                    'role' => 'customer',
+                ));
+                $user = get_user_by('ID', $user_id);
+            }
+
+            wp_set_auth_cookie($user->ID, true);
+            wp_set_current_user($user->ID);
+            do_action('wp_login', $user->user_login, $user);
+
+            update_user_meta($user->ID, 'quick-c-user-api-key', $api_key);
+        }
+
+
+        wp_send_json($response);
+    } else {
+        wp_send_json_error('Registration failed');
+    }
+
+}
+
+
+add_action('wp_ajax_search_short_address', 'QCWC_search_short_address');
+add_action('wp_ajax_nopriv_search_short_address', 'QCWC_search_short_address');
+
+function QCWC_search_short_address()
+{
+    $search = isset($_GET['value']) ? sanitize_text_field($_GET['value']) : '';
+
+    $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/user/lat-long-address/');
+    $response = $api_handler->getShortAddresses($search);
+
+    if ($response) {
+        wp_send_json($response);
+    } else {
+        wp_send_json_error('API request failed');
+    }
+
+}
 
 // Authentication Ajax
 
