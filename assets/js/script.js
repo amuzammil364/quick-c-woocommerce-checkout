@@ -40,7 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const add_new_address_tagline = document.querySelector(
     ".add-new-address-tagline"
   );
-  let addressContainer = document.querySelector(".addresses");
+  let addressContainer = document.querySelector(".QCWC_addresses");
   const add_new_time_form = document.querySelector(
     ".add-new-delivery-time-form"
   );
@@ -64,6 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
     "register_secondary_phone_number_code"
   );
   const register_email = document.getElementById("register_email");
+  let qcwc_cart_button = document.getElementById("qcwc-cart-button");
   let deliveryPreferences = [
     {
       day: "MORNING",
@@ -79,7 +80,8 @@ document.addEventListener("DOMContentLoaded", () => {
   if (
     typeof popupData !== "undefined" &&
     popupData.isTokenEmpty === "1" &&
-    popupData.quick_c_checkout
+    popupData.quick_c_checkout &&
+    popupData.is_open
   ) {
     document.getElementById("QCWC_loginModal").style.display = "flex";
     document.body.style.overflow = "hidden";
@@ -89,6 +91,16 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelector(".register-content").style.display = "none";
   }
 
+  if (qcwc_cart_button) {
+    qcwc_cart_button.addEventListener("click", () => {
+      document.getElementById("QCWC_loginModal").style.display = "flex";
+      document.body.style.overflow = "hidden";
+      document.querySelector(".login-content").style.display = "block";
+      document.querySelector(".verification-content").style.display = "none";
+      document.querySelector(".otp-content").style.display = "none";
+      document.querySelector(".register-content").style.display = "none";
+    });
+  }
   register_account_paras.forEach((account_para) => {
     let link = account_para.querySelector(".link");
     link.addEventListener("click", () => {
@@ -207,6 +219,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const startTime = document.getElementById("delivery_start_time");
     const endTime = document.getElementById("delivery_end_time");
 
+    const formatTime = (time) => {
+      const [hours, minutes] = time.split(":");
+      return `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}:00`;
+    };
+
     if (!day.value) {
       day.classList.add("valid");
     } else {
@@ -226,8 +243,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (day.value && startTime.value && endTime.value) {
       const deliveryPreference = {
         day: day.value.toUpperCase(),
-        start_time: startTime.value,
-        end_time: endTime.value,
+        start_time: formatTime(startTime.value),
+        end_time: formatTime(endTime.value),
         is_primary: false,
       };
 
@@ -236,13 +253,13 @@ document.addEventListener("DOMContentLoaded", () => {
       const newDeliveryTime = document.createElement("div");
       newDeliveryTime.classList.add("delivery-time");
       const deliveryLabel = `${day.value.toUpperCase()} ( ${
-        startTime.value
-      } - ${endTime.value} )`;
+        deliveryPreference.start_time
+      } - ${deliveryPreference.end_time} )`;
       newDeliveryTime.innerHTML = `
         <label class="custom-radio">
             <input type="radio" name="delivery_time" data-day="${day.value.toUpperCase()}" data-start_time="${
-        startTime.value
-      }" data-end_time="${endTime.value}"  />
+        deliveryPreference.start_time
+      }" data-end_time="${deliveryPreference.end_time}"  />
             <span class="radio-custom"></span>
             <span>${deliveryLabel}</span>
         </label>
@@ -285,7 +302,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (matchingIndex.length !== -1) {
           deliveryPreferences[matchingIndex].is_primary = true;
         }
-        console.log(deliveryPreferences);
       });
     });
   }
@@ -311,13 +327,13 @@ document.addEventListener("DOMContentLoaded", () => {
       : "";
 
     const addressHtml = `
-        <div class="address" id="${unique_id}">
+        <div class="QCWC_address" id="${unique_id}">
           <div class="QCWC_form-groups">
             <div class="QCWC_form-group">
                 <label for="#register_short_address">Short Address</label>
                 <input type="text" id="register_short_address_${unique_id}" placeholder="e.g123123">
                 <span class="error" id="shortAddressError_${unique_id}"></span>
-                <span class="input-loader"></span>
+                <span class="input-loader" id="input-loader_${unique_id}"></span>
                 <div class="dropdown-suggestions" id="dropdown_${unique_id}" style="display: none;">
                 </div>
             </div>
@@ -406,7 +422,9 @@ document.addEventListener("DOMContentLoaded", () => {
       .getElementById(`register_short_address_${unique_id}`)
       .addEventListener("input", (e) => {
         updateAddressField("short_address", e.target.value);
-        debouncedSearchShortAddress(e.target.value);
+        if (e.target.value.length > 7) {
+          debouncedSearchShortAddress(e.target.value);
+        }
       });
     document
       .getElementById(`register_primary_address_${unique_id}`)
@@ -457,7 +475,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (selectedAddress) {
           selectedAddress.is_primary = true;
         }
-        console.log(addresses);
       });
     });
 
@@ -468,7 +485,6 @@ document.addEventListener("DOMContentLoaded", () => {
           document.getElementById(`${unique_id}`).remove();
 
           addresses = addresses.filter((address) => address.id !== unique_id);
-          console.log(addresses);
         });
     }
 
@@ -482,7 +498,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const dropdown = document.getElementById(`dropdown_${unique_id}`);
 
     function searchShortAddress(value) {
-      const input_loader = document.querySelector(".input-loader");
+      const input_loader = document.getElementById(`input-loader_${unique_id}`);
       const data = {
         action: "search_short_address",
         value: value,
@@ -497,28 +513,18 @@ document.addEventListener("DOMContentLoaded", () => {
         success: function (response) {
           const dropdown = document.getElementById(`dropdown_${unique_id}`);
           dropdown.innerHTML = "";
-
+          let short_addresses = [];
           if (
             response.data?.Addresses &&
             response.data?.Addresses?.length > 0
           ) {
             dropdown.style.display = "block";
 
-            response.data.Addresses.forEach((item) => {
-              const suggestionItem = document.createElement("div");
-              suggestionItem.classList.add("suggestion-item");
-              suggestionItem.textContent = `${item.BuildingNumber} ${item.Street}`;
-              suggestionItem.addEventListener("click", () => {
-                document.getElementById(
-                  `register_short_address_${unique_id}`
-                ).value = item.BuildingNumber;
-                dropdown.style.display = "none";
-              });
-              dropdown.appendChild(suggestionItem);
-              input_loader.style.display = "none";
-            });
+            short_addresses = response.data.Addresses;
           } else {
             dropdown.style.display = "block";
+
+            short_addresses = [];
 
             const suggestionItem = document.createElement("div");
             suggestionItem.classList.add("suggestion-item");
@@ -528,6 +534,36 @@ document.addEventListener("DOMContentLoaded", () => {
             dropdown.appendChild(suggestionItem);
             input_loader.style.display = "none";
           }
+
+          short_addresses.forEach((item) => {
+            const suggestionItem = document.createElement("div");
+            suggestionItem.classList.add("suggestion-item");
+            suggestionItem.textContent = `${item.BuildingNumber}, ${item.Street}, ${item.City}, ${item.PostCode}`;
+            suggestionItem.addEventListener("click", () => {
+              document.getElementById(
+                `register_short_address_${unique_id}`
+              ).value = item.ShortAddress
+                ? item.ShortAddress
+                : document.getElementById(`register_short_address_${unique_id}`)
+                    .value;
+              document.getElementById(
+                `register_building_number_${unique_id}`
+              ).value = item.BuildingNumber ? item.BuildingNumber : "";
+              document.getElementById(
+                `register_street_name_${unique_id}`
+              ).value = item.Street ? item.Street : "";
+              document.getElementById(`register_district_${unique_id}`).value =
+                item.District ? item.District : "";
+              document.getElementById(`register_city_${unique_id}`).value =
+                item.City ? item.City : "";
+              document.getElementById(
+                `register_postal_code_${unique_id}`
+              ).value = item.PostCode ? item.PostCode : "";
+              dropdown.style.display = "none";
+            });
+            dropdown.appendChild(suggestionItem);
+            input_loader.style.display = "none";
+          });
         },
         error: function () {
           alert("There was an error with the request.");
@@ -556,6 +592,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const primaryPhoneNumberError = document.getElementById(
       "primaryPhoneNumberError"
     );
+
     const secondaryPhoneNumberError = document.getElementById(
       "secondaryPhoneNumberError"
     );
@@ -805,8 +842,11 @@ document.addEventListener("DOMContentLoaded", () => {
             errorMessage.innerHTML = "";
             btnLoader.style.display = "none";
             btnText.style.display = "block";
-            fetchUserDetails(register_email.value);
-            savePrimaryUserDetail(register_email.value);
+            if (popupData && !popupData.is_open) {
+              window.location.href = "/checkout?quick-c-checkout=true";
+            } else {
+              window.location.reload(true);
+            }
           } else {
             successMessage.classList.remove("active");
             successMessageText.innerHTML = "";
@@ -840,6 +880,17 @@ document.addEventListener("DOMContentLoaded", () => {
       fetchUserDetails(email.value);
       document.getElementById("QCWC_addressesModal").style.display = "flex";
       document.body.style.overflow = "hidden";
+    });
+  }
+
+  const QCWC_loginModal_close_btn = document.querySelector(
+    ".QCWC_loginModal_close_btn"
+  );
+
+  if (QCWC_loginModal_close_btn) {
+    QCWC_loginModal_close_btn.addEventListener("click", function () {
+      document.getElementById("QCWC_loginModal").style.display = "none";
+      document.body.style.overflow = "auto";
     });
   }
 
@@ -1195,7 +1246,11 @@ document.addEventListener("DOMContentLoaded", () => {
       type: "POST",
       data: data,
       success: function (response) {
-        window.location.reload(true);
+        if (popupData && !popupData.is_open) {
+          window.location.href = "/checkout?quick-c-checkout=true";
+        } else {
+          window.location.reload(true);
+        }
       },
       error: function () {
         alert("There was an error with the request.");

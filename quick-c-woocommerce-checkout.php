@@ -288,7 +288,7 @@ function remove_auth_token_from_session()
 // Check is User Logged in and is Checkout so script pass token and user email
 function QCWC_custom_checkout_popup()
 {
-    if (is_checkout()) {
+    if (is_checkout() || is_cart()) {
         $user_id = get_current_user_id();
         if ($user_id) {
             $user_token = get_user_meta($user_id, 'quick-c-user-api-key', true);
@@ -297,9 +297,10 @@ function QCWC_custom_checkout_popup()
         wp_localize_script('QCWC-script', 'popupData', array(
             'isTokenEmpty' => isset($user_id) ? empty($user_token) : "1",
             // 'userEmail' => wp_get_current_user()->user_email,
-            // 'userEmail' => isset($user_id) ? wp_get_current_user()->user_email : "",
-            'userEmail' => "admin@divistack.com",
+            'userEmail' => isset($user_id) ? wp_get_current_user()->user_email : "",
+            // 'userEmail' => "admin@divistack.com",
             'quick_c_checkout' => isset($_GET['quick-c-checkout']) && $_GET['quick-c-checkout'] === 'true',
+            'is_open' => is_checkout() ? true : false
         ));
     }
 }
@@ -443,9 +444,19 @@ add_action('woocommerce_after_cart_totals', 'qcwc_add_custom_cart_button', 10);
 function qcwc_add_custom_cart_button()
 {
     $checkout_url = wc_get_checkout_url() . '?quick-c-checkout=true';
+
+    $user_id = get_current_user_id();
+    if ($user_id) {
+        $user_token = get_user_meta($user_id, 'quick-c-user-api-key', true);
+    }
+
     ?>
     <div class="wc-proceed-to-checkout">
-        <a href="<?php echo esc_url($checkout_url); ?>" class="qcwc-cart-button">Quick c checkout</a>
+        <a href="<?php if (isset($user_id) && empty($user_token)) {
+            echo "#";
+        } else {
+            echo esc_url($checkout_url);
+        } ?>" class="qcwc-cart-button" id="qcwc-cart-button">Quick c checkout</a>
     </div>
     <?php
 }
@@ -484,11 +495,14 @@ add_action('woocommerce_before_order_notes', 'display_delivery_preferences_check
 // Add Authentication and Verify OTP Modal
 function QCWC_custom_popup_html()
 {
-    if (is_checkout()) {
+    if (is_checkout() || is_cart()) {
         ?>
         <div id="QCWC_loginModal" class="QCWC_loginModal" style="display: none;">
             <div class="QCWC_modal-content">
                 <p class="message"><span class="text"></span><span class="qcwc_loader"></span></p>
+                <div class="close-btn QCWC_loginModal_close_btn">
+                    &times;
+                </div>
                 <p class="error-message"></p>
                 <div class="login-content">
                     <img src="<?php echo plugins_url('assets/images/icon-logo.png', __FILE__); ?>" />
@@ -572,7 +586,7 @@ function QCWC_custom_popup_html()
                             </div>
                         </div>
                         <div class="register-tab-content" id="address-detail">
-                            <div class="addresses">
+                            <div class="QCWC_addresses">
                             </div>
                             <p class="add-new-address-tagline">+ Add New Address</p>
                         </div>
@@ -590,7 +604,14 @@ function QCWC_custom_popup_html()
                                 <div class="QCWC_delivery-time-form-groups">
                                     <div class="QCWC_form-group">
                                         <label for="#delivery_day">Day</label>
-                                        <input type="text" id="delivery_day" placeholder="Day">
+                                        <select id="delivery_day">
+                                            <option value="">Select Day</option>
+                                            <option value="Morning">Morning</option>
+                                            <option value="Afternoon">Afternoon</option>
+                                            <option value="Evening">Evening</option>
+                                            <option value="Night">Night</option>
+                                            <option value="Midnight">Midnight</option>
+                                        </select>
                                     </div>
                                     <div class="QCWC_form-group">
                                         <label for="#delivery_start_time">Start Time</label>
@@ -636,6 +657,7 @@ function QCWC_custom_popup_html()
                     <p class="register-account-para">Don't have an account? <span class="link">Register now</span></p>
                 </div>
             </div>
+            <p class="quick_c_registered_para">POWERED BY Quick-c</p>
         </div>
         <?php
     }
@@ -649,7 +671,7 @@ function QCWC_custom_addresses_html()
     $user_token = get_user_meta($user_id, 'quick-c-user-api-key', true);
     $check_user_token = empty($user_token);
 
-    if (is_checkout() && $check_user_token !== "1") {
+    if (is_checkout() || is_cart() && $check_user_token !== "1") {
         ?>
         <div id="QCWC_addressesModal" class="QCWC_addressesModal">
             <div class="QCWC_modal-content">
@@ -676,6 +698,7 @@ function QCWC_custom_addresses_html()
                     <button id="confirmAddressButton" type="button"><span class="confirm-btn-text">Confirm</span><span class="btn-loader confirm-btn-loader"></span></button>
                 </div>
             </div>
+            <p class="quick_c_registered_para">POWERED BY Quick-c</p>
         </div>
         <?php
     }
@@ -691,7 +714,7 @@ function QCWC_custom_delivery_prefences_html()
     $user_token = get_user_meta($user_id, 'quick-c-user-api-key', true);
     $check_user_token = empty($user_token);
 
-    if (is_checkout() && $check_user_token !== "1") {
+    if (is_checkout() || is_cart() && $check_user_token !== "1") {
         ?>
         <div id="QCWC_prefencesModal" class="QCWC_prefencesModal">
             <div class="QCWC_modal-content">
@@ -712,6 +735,7 @@ function QCWC_custom_delivery_prefences_html()
                     <button id="confirmPrefenceButton" type="button"><span class="confirm-btn-text1">Confirm</span><span class="btn-loader confirm-btn-loader1"></span></button>
                 </div>
             </div>
+            <p class="quick_c_registered_para">POWERED BY Quick-c</p>
         </div>
         <?php
     }
@@ -734,37 +758,207 @@ function QCWC_handle_register_user()
     $addresses = isset($_POST['addresses']) ? $_POST['addresses'] : [];
     $delivery_preferences = isset($_POST['delivery_preferences']) ? $_POST['delivery_preferences'] : [];
 
-    // $domain = $_SERVER['HTTP_HOST'];
-    // $root_domain = get_root_domain($domain);
-    $root_domain = "divistack.com";
+    $domain = $_SERVER['HTTP_HOST'];
+    $root_domain = get_root_domain($domain);
 
     $api_handler = new API_Handler('https://quick-c.devsy.tech/api/v1/platform/register-user/');
-    $response = $api_handler->registerUser(first_name: $first_name, last_name: $last_name, email: $email, primary_contact: $primary_contact, secondary_contact: $secondary_contact, addresses: $addresses, delivery_preferences: $delivery_preferences, root_domain: $root_domain);
+    $response = $api_handler->registerUser($first_name, $last_name, $email, $primary_contact, $secondary_contact, $addresses, $delivery_preferences, $root_domain);
+
 
     if ($response) {
         if (isset($response['status_code']) && $response['status_code'] == 201) {
             $api_key = $response['data']['api_key'];
+
             $user = get_user_by('email', $email);
 
             if (!$user) {
-                $username = sanitize_user($first_name . ' ' . $last_name);
                 $password = wp_generate_password();
-                $user_id = wp_create_user($username, $password, $email);
+                $user_id = wp_create_user($email, $password, $email);
 
                 wp_update_user(array(
                     'ID' => $user_id,
-                    'first_name' => $first_name,
-                    'last_name' => $last_name,
                     'role' => 'customer',
                 ));
-                $user = get_user_by('ID', $user_id);
+                $user = get_user_by('id', $user_id);
             }
 
             wp_set_auth_cookie($user->ID, true);
             wp_set_current_user($user->ID);
             do_action('wp_login', $user->user_login, $user);
 
-            update_user_meta($user->ID, 'quick-c-user-api-key', $api_key);
+
+            $current_user_id = get_current_user_id();
+            update_user_meta($current_user_id, 'quick-c-user-api-key', $api_key);
+
+            $user_token = $api_key;
+
+            $api_handler1 = new API_Handler('https://quick-c.devsy.tech/api/v1/user/details/');
+            $response1 = $api_handler1->getUserDetail($user_token, $email);
+
+            if ($response1 && isset($response1['data'])) {
+                $user_data = $response1['data'];
+
+                $primary_address = null;
+                if (!empty($user_data['addresses'])) {
+                    foreach ($user_data['addresses'] as $address) {
+                        if ($address['is_primary']) {
+                            $primary_address = $address;
+                            break;
+                        }
+                    }
+                }
+
+                $primary_delivery_preference = null;
+                if (!empty($user_data['delivery_preferences'])) {
+                    foreach ($user_data['delivery_preferences'] as $preference) {
+                        if ($preference['is_primary']) {
+                            $primary_delivery_preference = $preference;
+                            break;
+                        }
+                    }
+                }
+
+                if ($primary_address) {
+                    $primary_address_field = isset(
+                        $primary_address['primary_address']
+                    ) && $primary_address['primary_address'] !== null ? sanitize_text_field($primary_address['primary_address']) : "";
+                    $secondary_address_field = isset(
+                        $primary_address['secondary']
+                    ) && $primary_address['secondary'] !== null ? sanitize_text_field($primary_address['secondary']) : "";
+                    $short_address = isset(
+                        $primary_address['short_address']
+                    ) && $primary_address['short_address'] !== null ? sanitize_text_field($primary_address['short_address']) : "";
+                    $region = isset(
+                        $primary_address['region']
+                    ) && $primary_address['region'] !== null ? sanitize_text_field($primary_address['region']) : "";
+                    $unit_number = isset(
+                        $primary_address['unit_number']
+                    ) && $primary_address['unit_number'] !== null ? sanitize_text_field($primary_address['unit_number']) : "";
+                    $building_number = isset(
+                        $primary_address['building_number']
+                    ) && $primary_address['building_number'] !== null ? sanitize_text_field($primary_address['building_number']) : "";
+                    $street_name = isset(
+                        $primary_address['street_name']
+                    ) && $primary_address['street_name'] !== null ? sanitize_text_field($primary_address['street_name']) : "";
+                    $district = isset(
+                        $primary_address['district']
+                    ) && $primary_address['district'] !== null ? sanitize_text_field($primary_address['district']) : "";
+                    $latitude = isset(
+                        $primary_address['latitude']
+                    ) && $primary_address['latitude'] !== null ? sanitize_text_field($primary_address['latitude']) : "";
+                    $longitude = isset(
+                        $primary_address['longitude']
+                    ) && $primary_address['longitude'] !== null ? sanitize_text_field($primary_address['longitude']) : "";
+                    $city = sanitize_text_field($primary_address['city']);
+                    $postal_code = sanitize_text_field($primary_address['postal_code']);
+
+                    update_user_meta(
+                        $user_id,
+                        'shipping_address_1',
+                        $primary_address_field
+                    );
+                    update_user_meta($user_id, 'shipping_address_2', $secondary_address_field);
+                    update_user_meta($user_id, 'shipping_city', $city);
+                    update_user_meta($user_id, 'shipping_postcode', $postal_code);
+
+                    update_user_meta(
+                        $user_id,
+                        'billing_address_1',
+                        $primary_address_field
+                    );
+
+                    if (get_option('qcwc_enable_short_address')) {
+                        update_user_meta(
+                            $user_id,
+                            'billing_short_address',
+                            $short_address
+                        );
+                    }
+
+                    if (get_option('qcwc_enable_region')) {
+                        update_user_meta(
+                            $user_id,
+                            'billing_region',
+                            $region
+                        );
+                    }
+
+                    if (get_option('qcwc_enable_unit_number')) {
+                        update_user_meta(
+                            $user_id,
+                            'billing_unit_number',
+                            $unit_number
+                        );
+                    }
+
+                    if (get_option('qcwc_enable_building_number')) {
+                        update_user_meta(
+                            $user_id,
+                            'billing_building_number',
+                            $building_number
+                        );
+                    }
+
+                    if (get_option('qcwc_enable_street_name')) {
+                        update_user_meta(
+                            $user_id,
+                            'billing_street_name',
+                            $street_name
+                        );
+                    }
+
+                    if (get_option('qcwc_enable_district')) {
+                        update_user_meta(
+                            $user_id,
+                            'billing_district',
+                            $district
+                        );
+                    }
+
+                    if (get_option('qcwc_enable_lat')) {
+                        update_user_meta(
+                            $user_id,
+                            'billing_lat',
+                            $latitude
+                        );
+                    }
+
+                    if (get_option('qcwc_enable_long')) {
+                        update_user_meta(
+                            $user_id,
+                            'billing_long',
+                            $longitude
+                        );
+                    }
+
+
+                    update_user_meta($user_id, 'billing_address_2', $secondary_address_field);
+                    update_user_meta($user_id, 'billing_city', $city);
+                    update_user_meta($user_id, 'billing_postcode', $postal_code);
+                }
+
+                if ($primary_delivery_preference) {
+                    $delivery_preferences = array(
+                        'day' => $primary_delivery_preference['day'] ? $primary_delivery_preference['day'] : "N/A",
+                        'start_time' => $primary_delivery_preference['start_time'] ? $primary_delivery_preference['start_time'] : "N/A",
+                        'end_time' => $primary_delivery_preference['end_time'] ? $primary_delivery_preference['end_time'] : "N/A"
+                    );
+
+                    update_user_meta($user_id, 'delivery_preferences', $delivery_preferences);
+                }
+
+                $user_ids = get_current_user_id();
+
+
+                update_user_meta($user_ids, 'shipping_first_name', $user_data['first_name']);
+                update_user_meta($user_id, 'shipping_last_name', $user_data['last_name']);
+                update_user_meta($user_id, 'shipping_phone', $user_data['profile']['primary_contact']);
+
+                update_user_meta($user_ids, 'billing_first_name', $user_data['first_name']);
+                update_user_meta($user_id, 'billing_last_name', $user_data['last_name']);
+                update_user_meta($user_id, 'billing_phone', $user_data['profile']['primary_contact']);
+
+            }
         }
 
 
@@ -806,9 +1000,8 @@ function QCWC_handle_authentication()
     // $domain = $protocol . $_SERVER['HTTP_HOST'];
     // $domain = $_SERVER['HTTP_HOST'];
 
-    // $domain = $_SERVER['HTTP_HOST'];
-    // $root_domain = get_root_domain($domain);
-    $root_domain = "divistack.com";
+    $domain = $_SERVER['HTTP_HOST'];
+    $root_domain = get_root_domain($domain);
     global $platform;
     $verifyMethod = isset($_POST['verifyMethod']) ? sanitize_text_field($_POST['verifyMethod']) : 'JWT';
 
@@ -858,9 +1051,8 @@ function QCWC_check_api_key()
     // $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443 ? "https://" : "http://";
     // $domain = $_SERVER['HTTP_HOST'];
 
-    // $domain = $_SERVER['HTTP_HOST'];
-    // $root_domain = get_root_domain($domain);
-    $root_domain = "divistack.com";
+    $domain = $_SERVER['HTTP_HOST'];
+    $root_domain = get_root_domain($domain);
     global $platform;
     $email = isset($_GET['email']) ? sanitize_text_field($_GET['email']) : '';
 
@@ -874,32 +1066,195 @@ function QCWC_check_api_key()
         if (isset($response['status_code']) && $response['status_code'] == 200) {
             $api_key = $response['data']['api_key'];
 
-            if (!is_user_logged_in()) {
-                $user = get_user_by('email', $email);
+            $user = get_user_by('email', $email);
 
-                if (!$user) {
-                    $random_password = wp_generate_password();
-                    $user_id = wp_create_user($email, $random_password, $email);
+            if (!$user) {
+                $random_password = wp_generate_password();
+                $user_id = wp_create_user($email, $random_password, $email);
 
-                    wp_update_user(array(
-                        'ID' => $user_id,
-                        'role' => 'customer'
-                    ));
+                wp_update_user(array(
+                    'ID' => $user_id,
+                    'role' => 'customer'
+                ));
 
-                    $user = get_user_by('id', $user_id);
-                }
-
-                wp_set_auth_cookie($user->ID, true);
-                wp_set_current_user($user->ID);
-                do_action('wp_login', $user->user_login, $user);
+                $user = get_user_by('id', $user_id);
             }
+
+            wp_set_auth_cookie($user->ID, true);
+            wp_set_current_user($user->ID);
+            do_action('wp_login', $user->user_login, $user);
 
             $current_user_id = get_current_user_id();
             update_user_meta($current_user_id, 'quick-c-user-api-key', $api_key);
-        }
 
-        if (!is_user_logged_in()) {
-            if (isset($response['status_code']) && $response['status_code'] == 404) {
+            $user_token = $api_key;
+
+            $api_handler1 = new API_Handler('https://quick-c.devsy.tech/api/v1/user/details/');
+            $response1 = $api_handler1->getUserDetail($user_token, $email);
+
+            if ($response1 && isset($response1['data'])) {
+                $user_data = $response1['data'];
+
+                $primary_address = null;
+                if (!empty($user_data['addresses'])) {
+                    foreach ($user_data['addresses'] as $address) {
+                        if ($address['is_primary']) {
+                            $primary_address = $address;
+                            break;
+                        }
+                    }
+                }
+
+                $primary_delivery_preference = null;
+                if (!empty($user_data['delivery_preferences'])) {
+                    foreach ($user_data['delivery_preferences'] as $preference) {
+                        if ($preference['is_primary']) {
+                            $primary_delivery_preference = $preference;
+                            break;
+                        }
+                    }
+                }
+
+                if ($primary_address) {
+                    $primary_address_field = isset(
+                        $primary_address['primary_address']
+                    ) && $primary_address['primary_address'] !== null ? sanitize_text_field($primary_address['primary_address']) : "";
+                    $secondary_address_field = isset(
+                        $primary_address['secondary']
+                    ) && $primary_address['secondary'] !== null ? sanitize_text_field($primary_address['secondary']) : "";
+                    $short_address = isset(
+                        $primary_address['short_address']
+                    ) && $primary_address['short_address'] !== null ? sanitize_text_field($primary_address['short_address']) : "";
+                    $region = isset(
+                        $primary_address['region']
+                    ) && $primary_address['region'] !== null ? sanitize_text_field($primary_address['region']) : "";
+                    $unit_number = isset(
+                        $primary_address['unit_number']
+                    ) && $primary_address['unit_number'] !== null ? sanitize_text_field($primary_address['unit_number']) : "";
+                    $building_number = isset(
+                        $primary_address['building_number']
+                    ) && $primary_address['building_number'] !== null ? sanitize_text_field($primary_address['building_number']) : "";
+                    $street_name = isset(
+                        $primary_address['street_name']
+                    ) && $primary_address['street_name'] !== null ? sanitize_text_field($primary_address['street_name']) : "";
+                    $district = isset(
+                        $primary_address['district']
+                    ) && $primary_address['district'] !== null ? sanitize_text_field($primary_address['district']) : "";
+                    $latitude = isset(
+                        $primary_address['latitude']
+                    ) && $primary_address['latitude'] !== null ? sanitize_text_field($primary_address['latitude']) : "";
+                    $longitude = isset(
+                        $primary_address['longitude']
+                    ) && $primary_address['longitude'] !== null ? sanitize_text_field($primary_address['longitude']) : "";
+                    $city = sanitize_text_field($primary_address['city']);
+                    $postal_code = sanitize_text_field($primary_address['postal_code']);
+
+                    update_user_meta(
+                        $user_id,
+                        'shipping_address_1',
+                        $primary_address_field
+                    );
+                    update_user_meta($user_id, 'shipping_address_2', $secondary_address_field);
+                    update_user_meta($user_id, 'shipping_city', $city);
+                    update_user_meta($user_id, 'shipping_postcode', $postal_code);
+
+                    update_user_meta(
+                        $user_id,
+                        'billing_address_1',
+                        $primary_address_field
+                    );
+
+                    if (get_option('qcwc_enable_short_address')) {
+                        update_user_meta(
+                            $user_id,
+                            'billing_short_address',
+                            $short_address
+                        );
+                    }
+
+                    if (get_option('qcwc_enable_region')) {
+                        update_user_meta(
+                            $user_id,
+                            'billing_region',
+                            $region
+                        );
+                    }
+
+                    if (get_option('qcwc_enable_unit_number')) {
+                        update_user_meta(
+                            $user_id,
+                            'billing_unit_number',
+                            $unit_number
+                        );
+                    }
+
+                    if (get_option('qcwc_enable_building_number')) {
+                        update_user_meta(
+                            $user_id,
+                            'billing_building_number',
+                            $building_number
+                        );
+                    }
+
+                    if (get_option('qcwc_enable_street_name')) {
+                        update_user_meta(
+                            $user_id,
+                            'billing_street_name',
+                            $street_name
+                        );
+                    }
+
+                    if (get_option('qcwc_enable_district')) {
+                        update_user_meta(
+                            $user_id,
+                            'billing_district',
+                            $district
+                        );
+                    }
+
+                    if (get_option('qcwc_enable_lat')) {
+                        update_user_meta(
+                            $user_id,
+                            'billing_lat',
+                            $latitude
+                        );
+                    }
+
+                    if (get_option('qcwc_enable_long')) {
+                        update_user_meta(
+                            $user_id,
+                            'billing_long',
+                            $longitude
+                        );
+                    }
+
+
+                    update_user_meta($user_id, 'billing_address_2', $secondary_address_field);
+                    update_user_meta($user_id, 'billing_city', $city);
+                    update_user_meta($user_id, 'billing_postcode', $postal_code);
+                }
+
+                if ($primary_delivery_preference) {
+                    $delivery_preferences = array(
+                        'day' => $primary_delivery_preference['day'] ? $primary_delivery_preference['day'] : "N/A",
+                        'start_time' => $primary_delivery_preference['start_time'] ? $primary_delivery_preference['start_time'] : "N/A",
+                        'end_time' => $primary_delivery_preference['end_time'] ? $primary_delivery_preference['end_time'] : "N/A"
+                    );
+
+                    update_user_meta($user_id, 'delivery_preferences', $delivery_preferences);
+                }
+
+                $user_ids = get_current_user_id();
+
+
+                update_user_meta($user_ids, 'shipping_first_name', $user_data['first_name']);
+                update_user_meta($user_id, 'shipping_last_name', $user_data['last_name']);
+                update_user_meta($user_id, 'shipping_phone', $user_data['profile']['primary_contact']);
+
+                update_user_meta($user_ids, 'billing_first_name', $user_data['first_name']);
+                update_user_meta($user_id, 'billing_last_name', $user_data['last_name']);
+                update_user_meta($user_id, 'billing_phone', $user_data['profile']['primary_contact']);
+
             }
         }
 

@@ -1,3 +1,13 @@
+.quick_c_registered_para {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  color: rgba(255, 255, 255, 0.808);
+  font-family: "Poppins", sans-serif;
+  font-size: 16px;
+  margin-bottom: 0 !important;
+}
+
 .QCWC_loginModal {
   position: fixed;
   top: 0;
@@ -43,6 +53,21 @@
   justify-content: center;
   border-radius: 5px;
   cursor: pointer;
+}
+
+.QCWC_loginModal .close-btn {
+  margin-left: auto;
+  width: 36px;
+  height: 35px;
+  background-color: #ddddddc4;
+  color: #000;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-bottom: 10px;
 }
 
 .QCWC_prefencesModal {
@@ -106,6 +131,7 @@
   border-radius: 10px;
   max-height: 600px;
   overflow-y: scroll;
+  position: relative;
 }
 
 .QCWC_loginModal .QCWC_modal-content::-webkit-scrollbar {
@@ -148,6 +174,7 @@
   align-items: center;
   justify-content: center;
   gap: 0 10px;
+  margin-bottom: 0 !important;
 }
 
 .QCWC_loginModal .QCWC_modal-content .message .qcwc_loader {
@@ -237,7 +264,8 @@
   line-height: 22.4px;
 }
 
-.QCWC_loginModal .QCWC_modal-content input {
+.QCWC_loginModal .QCWC_modal-content input,
+.QCWC_loginModal .QCWC_modal-content select {
   width: 100%;
   padding: 12px 20px;
   border: 1px solid #dfe2e8;
@@ -433,7 +461,8 @@
 }
 
 .radio-custom {
-  width: 20px;
+  max-width: 20px;
+  width: 100%;
   height: 20px;
   border: 2px solid black;
   border-radius: 50%;
@@ -548,6 +577,11 @@
   font-size: 18px !important;
   font-weight: 600 !important;
   cursor: pointer !important;
+  text-transform: uppercase !important;
+}
+
+.cart_totals .wc-proceed-to-checkout button.qcwc-cart-button {
+  line-height: 1.8em !important;
 }
 
 .cart_totals .wc-proceed-to-checkout a::after {
@@ -576,6 +610,7 @@
 }
 
 button[name="apply_coupon"],
+button[name="woocommerce_checkout_place_order"],
 button[name="update_cart"],
 button[name="calc_shipping"] {
   background-color: #252525 !important;
@@ -588,6 +623,7 @@ button[name="calc_shipping"] {
 }
 
 button[name="apply_coupon"]:hover::after,
+button[name="woocommerce_checkout_place_order"]:hover::after,
 button[name="update_cart"]:hover::after,
 button[name="calc_shipping"]:hover::after {
   display: none !important;
@@ -852,11 +888,18 @@ button[name="calc_shipping"]:hover::after {
 
 .QCWC_loginModal .add-new-delivery-time-form .QCWC_delivery-time-form-groups {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
 
-.QCWC_loginModal .addresses .address {
+.QCWC_loginModal
+  .add-new-delivery-time-form
+  .QCWC_delivery-time-form-groups
+  .QCWC_form-group:nth-child(1) {
+  grid-column: span 2;
+}
+
+.QCWC_loginModal .QCWC_addresses .QCWC_address {
   border-bottom: 1px solid #e9e9e9;
   padding-bottom: 20px;
   margin-bottom: 20px;
@@ -911,7 +954,7 @@ button[name="calc_shipping"]:hover::after {
 
 .QCWC_loginModal .dropdown-suggestions {
   position: absolute;
-  bottom: -70%;
+  top: 100%;
   left: 0;
   width: 100%;
   background-color: #fff;
@@ -925,6 +968,9 @@ button[name="calc_shipping"]:hover::after {
   padding: 14px 16px;
   transition: 0.2s;
   cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .QCWC_loginModal .dropdown-suggestions .not-found {
@@ -943,4 +989,8 @@ button[name="calc_shipping"]:hover::after {
 .QCWC_loginModal .dropdown-suggestions .suggestion-item:last-child {
   border-bottom-left-radius: 10px;
   border-bottom-right-radius: 10px;
+}
+
+a.woocommerce-privacy-policy-link {
+  color: #252525;
 }
