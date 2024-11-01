@@ -1277,6 +1277,8 @@ document.addEventListener("DOMContentLoaded", () => {
           successMessage.classList.remove("active");
           successMessageText.innerHTML = "";
           isApiKeyChecked = true;
+          document.querySelector(".login-content").style.pointerEvents = "all";
+          document.querySelector(".login-content").style.opacity = "1";
           fetchUserDetails(email.value);
           savePrimaryUserDetail(email.value);
         } else if (
@@ -1290,6 +1292,8 @@ document.addEventListener("DOMContentLoaded", () => {
             "block";
           document.querySelector(".otp-content").style.display = "none";
           successMessage.classList.remove("active");
+          document.querySelector(".login-content").style.pointerEvents = "all";
+          document.querySelector(".login-content").style.opacity = "1";
           successMessageText.innerHTML = "";
         } else {
           startApiKeyCheck();

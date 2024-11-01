@@ -24,6 +24,10 @@
   overflow-y: scroll;
 }
 
+.QCWC_loginModal .QCWC_loginModal_close_btn {
+  margin-top: 6px;
+}
+
 .QCWC_addressesModal {
   position: fixed;
   top: 0;
@@ -132,6 +136,13 @@
   max-height: 600px;
   overflow-y: scroll;
   position: relative;
+}
+
+.QCWC_loginModal
+  .QCWC_modal-content
+  .verification-content
+  p.verification-tagline {
+  margin-bottom: 0 !important;
 }
 
 .QCWC_loginModal .QCWC_modal-content::-webkit-scrollbar {

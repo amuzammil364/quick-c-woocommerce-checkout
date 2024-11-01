@@ -151,7 +151,7 @@ function qcwc_add_admin_menu()
 
 function qcwc_settings_page_content()
 {
-    ?>
+?>
     <div class="wrap">
         <h1>Quick C Settings</h1>
         <?php
@@ -165,7 +165,7 @@ function qcwc_settings_page_content()
             ?>
         </form>
     </div>
-    <?php
+<?php
 }
 
 
@@ -450,13 +450,13 @@ function qcwc_add_custom_cart_button()
         $user_token = get_user_meta($user_id, 'quick-c-user-api-key', true);
     }
 
-    ?>
+?>
     <div class="wc-proceed-to-checkout">
         <a href="<?php if (isset($user_id) && empty($user_token)) {
-            echo "#";
-        } else {
-            echo esc_url($checkout_url);
-        } ?>" class="qcwc-cart-button" id="qcwc-cart-button">Quick c checkout</a>
+                        echo "#";
+                    } else {
+                        echo esc_url($checkout_url);
+                    } ?>" class="qcwc-cart-button" id="qcwc-cart-button">Quick c checkout</a>
     </div>
     <?php
 }
@@ -496,7 +496,7 @@ add_action('woocommerce_before_order_notes', 'display_delivery_preferences_check
 function QCWC_custom_popup_html()
 {
     if (is_checkout() || is_cart()) {
-        ?>
+    ?>
         <div id="QCWC_loginModal" class="QCWC_loginModal" style="display: none;">
             <div class="QCWC_modal-content">
                 <p class="message"><span class="text"></span><span class="qcwc_loader"></span></p>
@@ -632,15 +632,14 @@ function QCWC_custom_popup_html()
                     <button id="registerButton" type="button"><span class="register-btn-text">Continue</span> <span class="btn-loader register-btn-loader"></span> </button>
                     <p class="login-account-para">Already have an account? <span class="link">Login now</span></p>
                 </div>
-            </div>
-            <div class="verification-content" style="display: none;">
-                <img src="<?php echo plugins_url('assets/images/icon-logo.png', __FILE__); ?>" />
-                <h2>Verification Required</h2>
-                <p>Please select the verification option to verify</p>
-                <div class="btns">
-                    <button id="verifyViaDeviceBtn" type="button"><span class="btn-text">Verify Via Device</span> <span class="btn-loader"></span></button>
-                    <button id="verifyViaOtp" type="button"><span class="btn-text">Verify Via OTP</span> <span class="btn-loader"></span></button>
-                    /div>
+                <div class="verification-content" style="display: none;">
+                    <img src="<?php echo plugins_url('assets/images/icon-logo.png', __FILE__); ?>" />
+                    <h2>Verification Required</h2>
+                    <p class="verification-tagline">Please select the verification option to verify</p>
+                    <div class="btns">
+                        <button id="verifyViaDeviceBtn" type="button"><span class="btn-text">Verify Via Device</span> <span class="btn-loader"></span></button>
+                        <button id="verifyViaOtp" type="button"><span class="btn-text">Verify Via OTP</span> <span class="btn-loader"></span></button>
+                    </div>
                     <p class="register-account-para">Don't have an account? <span class="link">Register now</span></p>
                 </div>
                 <div class="otp-content" style="display: none;">
@@ -659,7 +658,7 @@ function QCWC_custom_popup_html()
             </div>
             <p class="quick_c_registered_para">POWERED BY Quick-c</p>
         </div>
-        <?php
+    <?php
     }
 }
 add_action('wp_footer', 'QCWC_custom_popup_html');
@@ -672,7 +671,7 @@ function QCWC_custom_addresses_html()
     $check_user_token = empty($user_token);
 
     if (is_checkout() || is_cart() && $check_user_token !== "1") {
-        ?>
+    ?>
         <div id="QCWC_addressesModal" class="QCWC_addressesModal">
             <div class="QCWC_modal-content">
                 <p class="error-message error-message1"></p>
@@ -700,7 +699,7 @@ function QCWC_custom_addresses_html()
             </div>
             <p class="quick_c_registered_para">POWERED BY Quick-c</p>
         </div>
-        <?php
+    <?php
     }
 }
 
@@ -715,7 +714,7 @@ function QCWC_custom_delivery_prefences_html()
     $check_user_token = empty($user_token);
 
     if (is_checkout() || is_cart() && $check_user_token !== "1") {
-        ?>
+    ?>
         <div id="QCWC_prefencesModal" class="QCWC_prefencesModal">
             <div class="QCWC_modal-content">
                 <p class="error-message error-message2"></p>
@@ -737,7 +736,7 @@ function QCWC_custom_delivery_prefences_html()
             </div>
             <p class="quick_c_registered_para">POWERED BY Quick-c</p>
         </div>
-        <?php
+<?php
     }
 }
 
@@ -957,7 +956,6 @@ function QCWC_handle_register_user()
                 update_user_meta($user_ids, 'billing_first_name', $user_data['first_name']);
                 update_user_meta($user_id, 'billing_last_name', $user_data['last_name']);
                 update_user_meta($user_id, 'billing_phone', $user_data['profile']['primary_contact']);
-
             }
         }
 
@@ -966,7 +964,6 @@ function QCWC_handle_register_user()
     } else {
         wp_send_json_error('Registration failed');
     }
-
 }
 
 
@@ -985,7 +982,6 @@ function QCWC_search_short_address()
     } else {
         wp_send_json_error('API request failed');
     }
-
 }
 
 // Authentication Ajax
@@ -1254,7 +1250,6 @@ function QCWC_check_api_key()
                 update_user_meta($user_ids, 'billing_first_name', $user_data['first_name']);
                 update_user_meta($user_id, 'billing_last_name', $user_data['last_name']);
                 update_user_meta($user_id, 'billing_phone', $user_data['profile']['primary_contact']);
-
             }
         }
 
