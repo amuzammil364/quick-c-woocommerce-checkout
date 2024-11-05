@@ -151,7 +151,7 @@ function qcwc_add_admin_menu()
 
 function qcwc_settings_page_content()
 {
-?>
+    ?>
     <div class="wrap">
         <h1>Quick C Settings</h1>
         <?php
@@ -165,7 +165,7 @@ function qcwc_settings_page_content()
             ?>
         </form>
     </div>
-<?php
+    <?php
 }
 
 
@@ -450,13 +450,13 @@ function qcwc_add_custom_cart_button()
         $user_token = get_user_meta($user_id, 'quick-c-user-api-key', true);
     }
 
-?>
+    ?>
     <div class="wc-proceed-to-checkout">
         <a href="<?php if (isset($user_id) && empty($user_token)) {
-                        echo "#";
-                    } else {
-                        echo esc_url($checkout_url);
-                    } ?>" class="qcwc-cart-button" id="qcwc-cart-button">Quick c checkout</a>
+            echo "#";
+        } else {
+            echo esc_url($checkout_url);
+        } ?>" class="qcwc-cart-button" id="qcwc-cart-button">Quick c checkout</a>
     </div>
     <?php
 }
@@ -496,7 +496,7 @@ add_action('woocommerce_before_order_notes', 'display_delivery_preferences_check
 function QCWC_custom_popup_html()
 {
     if (is_checkout() || is_cart()) {
-    ?>
+        ?>
         <div id="QCWC_loginModal" class="QCWC_loginModal" style="display: none;">
             <div class="QCWC_modal-content">
                 <p class="message"><span class="text"></span><span class="qcwc_loader"></span></p>
@@ -658,7 +658,7 @@ function QCWC_custom_popup_html()
             </div>
             <p class="quick_c_registered_para">POWERED BY Quick-c</p>
         </div>
-    <?php
+        <?php
     }
 }
 add_action('wp_footer', 'QCWC_custom_popup_html');
@@ -671,7 +671,7 @@ function QCWC_custom_addresses_html()
     $check_user_token = empty($user_token);
 
     if (is_checkout() || is_cart() && $check_user_token !== "1") {
-    ?>
+        ?>
         <div id="QCWC_addressesModal" class="QCWC_addressesModal">
             <div class="QCWC_modal-content">
                 <p class="error-message error-message1"></p>
@@ -699,7 +699,7 @@ function QCWC_custom_addresses_html()
             </div>
             <p class="quick_c_registered_para">POWERED BY Quick-c</p>
         </div>
-    <?php
+        <?php
     }
 }
 
@@ -714,7 +714,7 @@ function QCWC_custom_delivery_prefences_html()
     $check_user_token = empty($user_token);
 
     if (is_checkout() || is_cart() && $check_user_token !== "1") {
-    ?>
+        ?>
         <div id="QCWC_prefencesModal" class="QCWC_prefencesModal">
             <div class="QCWC_modal-content">
                 <p class="error-message error-message2"></p>
@@ -736,7 +736,7 @@ function QCWC_custom_delivery_prefences_html()
             </div>
             <p class="quick_c_registered_para">POWERED BY Quick-c</p>
         </div>
-<?php
+        <?php
     }
 }
 
@@ -1735,26 +1735,26 @@ function QCWC_update_order($order_id)
             $data = array(
                 "store_name" => "Quick-c",
                 "current_status" => $order->get_status(),
-                "order_items" => array(),
+                // "order_items" => array(),
             );
 
-            foreach ($order->get_items() as $item_id => $item) {
-                $product_name = $item->get_name();
-                $quantity = $item->get_quantity();
+            // foreach ($order->get_items() as $item_id => $item) {
+            //     $product_name = $item->get_name();
+            //     $quantity = $item->get_quantity();
 
-                $product = $item->get_product();
+            //     $product = $item->get_product();
 
-                $image_url = '';
-                if ($product && $product->get_image_id()) {
-                    $image_url = wp_get_attachment_url($product->get_image_id());
-                }
+            //     $image_url = '';
+            //     if ($product && $product->get_image_id()) {
+            //         $image_url = wp_get_attachment_url($product->get_image_id());
+            //     }
 
-                $data['order_items'][] = array(
-                    'item_name' => $product_name,
-                    'quantity' => $quantity,
-                    'item_image' => $image_url,
-                );
-            }
+            //     $data['order_items'][] = array(
+            //         'item_name' => $product_name,
+            //         'quantity' => $quantity,
+            //         'item_image' => $image_url,
+            //     );
+            // }
 
             $json_data = json_encode($data);
 
