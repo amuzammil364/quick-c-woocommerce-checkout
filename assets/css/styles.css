@@ -916,12 +916,6 @@ button[name="calc_shipping"]:hover::after {
   margin-bottom: 20px;
 }
 
-.QCWC_loginModal .delivery-times {
-  display: flex;
-  flex-direction: column;
-  gap: 13px 0;
-}
-
 .QCWC_loginModal .add-new-delivery-time-form .btns {
   display: flex;
   align-items: center;
@@ -1004,4 +998,67 @@ button[name="calc_shipping"]:hover::after {
 
 a.woocommerce-privacy-policy-link {
   color: #252525;
+}
+
+.QCWC_loginModal .delivery-times {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.QCWC_loginModal .delivery-times .delivery-time {
+  width: 25%;
+  text-align: center;
+  border: 2px solid #e9e9e9;
+  padding: 14px 0;
+  cursor: pointer;
+}
+
+.QCWC_loginModal .delivery-times .delivery-time:nth-child(1) {
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+}
+
+.QCWC_loginModal .delivery-times .delivery-time:nth-child(2) {
+  border-left: 0;
+}
+
+.QCWC_loginModal .delivery-times .delivery-time:nth-child(3) {
+  border-left: 0;
+}
+
+.QCWC_loginModal .delivery-times .delivery-time:nth-child(4) {
+  border-left: 0;
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+.QCWC_loginModal .delivery-times .delivery-time img {
+  opacity: 0.5;
+  margin-bottom: 0 !important;
+  width: 26px !important;
+  height: 26px !important;
+}
+
+.QCWC_loginModal .delivery-times .delivery-time.selected img {
+  opacity: 1;
+}
+
+.QCWC_loginModal .delivery-times .delivery-time p.day {
+  margin-bottom: 0px !important;
+  padding-bottom: 0 !important;
+  font-weight: 700;
+  font-size: 14px !important;
+}
+
+.QCWC_loginModal .delivery-times .delivery-time p.time {
+  margin-bottom: 0 !important;
+}
+
+.QCWC_loginModal .delivery-times .delivery-time.selected p {
+  color: #252525;
+}
+
+.QCWC_loginModal .delivery-times .delivery-time p {
+  color: grey;
 }

@@ -34,21 +34,10 @@ document.addEventListener("DOMContentLoaded", () => {
   let register_tab_contents = document.querySelectorAll(
     ".register-tab-content"
   );
-  const add_new_time_tagline = document.querySelector(
-    ".add-new-delivery-time-tagline"
-  );
   const add_new_address_tagline = document.querySelector(
     ".add-new-address-tagline"
   );
   let addressContainer = document.querySelector(".QCWC_addresses");
-  const add_new_time_form = document.querySelector(
-    ".add-new-delivery-time-form"
-  );
-  const add_delivery_time_button = document.getElementById("add_delivery_time");
-  const cancel_delivery_time_button = document.getElementById(
-    "cancel_delivery_time"
-  );
-  const delivery_times_container = document.querySelector(".delivery-times");
   const firstName = document.getElementById("register_first_name");
   const lastName = document.getElementById("register_last_name");
   const register_primary_phone_number_code = document.getElementById(
@@ -64,13 +53,37 @@ document.addEventListener("DOMContentLoaded", () => {
     "register_secondary_phone_number_code"
   );
   const register_email = document.getElementById("register_email");
+  const confirm_address_button = document.getElementById(
+    "confirmAddressButton"
+  );
+  const confirm_prefence_button = document.getElementById(
+    "confirmPrefenceButton"
+  );
   let qcwc_cart_button = document.getElementById("qcwc-cart-button");
   let deliveryPreferences = [
     {
+      day: "MIDNIGHT",
+      start_time: "00",
+      end_time: "06",
+      is_primary: false,
+    },
+    {
       day: "MORNING",
-      start_time: "09:00:00",
-      end_time: "10:00:00",
+      start_time: "06",
+      end_time: "12",
       is_primary: true,
+    },
+    {
+      day: "AFTERNOON",
+      start_time: "12",
+      end_time: "18",
+      is_primary: false,
+    },
+    {
+      day: "EVENING",
+      start_time: "18",
+      end_time: "00",
+      is_primary: false,
     },
   ];
   let addresses = [];
@@ -93,12 +106,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (qcwc_cart_button) {
     qcwc_cart_button.addEventListener("click", () => {
-      document.getElementById("QCWC_loginModal").style.display = "flex";
-      document.body.style.overflow = "hidden";
-      document.querySelector(".login-content").style.display = "block";
-      document.querySelector(".verification-content").style.display = "none";
-      document.querySelector(".otp-content").style.display = "none";
-      document.querySelector(".register-content").style.display = "none";
+      if (qcwc_cart_button.getAttribute("href") === "#") {
+        document.getElementById("QCWC_loginModal").style.display = "flex";
+        document.body.style.overflow = "hidden";
+        document.querySelector(".login-content").style.display = "block";
+        document.querySelector(".verification-content").style.display = "none";
+        document.querySelector(".otp-content").style.display = "none";
+        document.querySelector(".register-content").style.display = "none";
+      }
     });
   }
   register_account_paras.forEach((account_para) => {
@@ -204,109 +219,48 @@ document.addEventListener("DOMContentLoaded", () => {
 
   register_tabs[0].click();
 
-  add_new_time_tagline.addEventListener("click", () => {
-    add_new_time_tagline.style.display = "none";
-    add_new_time_form.style.display = "block";
-  });
+  function renderDeliveryPreferences(preferences) {
+    const container = document.querySelector(".delivery-times");
+    container.innerHTML = "";
 
-  cancel_delivery_time_button.addEventListener("click", () => {
-    add_new_time_tagline.style.display = "block";
-    add_new_time_form.style.display = "none";
-  });
+    preferences.forEach((preference, index) => {
+      const deliveryTimeDiv = document.createElement("div");
+      deliveryTimeDiv.classList.add("delivery-time");
+      if (preference.is_primary) {
+        deliveryTimeDiv.classList.add("selected");
+      }
 
-  add_delivery_time_button.addEventListener("click", () => {
-    const day = document.getElementById("delivery_day");
-    const startTime = document.getElementById("delivery_start_time");
-    const endTime = document.getElementById("delivery_end_time");
+      deliveryTimeDiv.innerHTML = `
+      <img src="${
+        index === 0
+          ? MyPlugin.midNightIconUrl
+          : index === 1
+          ? MyPlugin.sunIconUrl
+          : index === 2
+          ? MyPlugin.afterNoonIconUrl
+          : MyPlugin.eveningIconUrl
+      }" />
+      <p class="day">${preference.day}</p>
+      <p class="time">${preference.start_time} - ${preference.end_time}</p>
+      `;
 
-    const formatTime = (time) => {
-      const [hours, minutes] = time.split(":");
-      return `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}:00`;
-    };
-
-    if (!day.value) {
-      day.classList.add("valid");
-    } else {
-      day.classList.remove("valid");
-    }
-    if (!startTime.value) {
-      startTime.classList.add("valid");
-    } else {
-      startTime.classList.remove("valid");
-    }
-    if (!endTime.value) {
-      endTime.classList.add("valid");
-    } else {
-      endTime.classList.remove("valid");
-    }
-
-    if (day.value && startTime.value && endTime.value) {
-      const deliveryPreference = {
-        day: day.value.toUpperCase(),
-        start_time: formatTime(startTime.value),
-        end_time: formatTime(endTime.value),
-        is_primary: false,
-      };
-
-      deliveryPreferences.push(deliveryPreference);
-
-      const newDeliveryTime = document.createElement("div");
-      newDeliveryTime.classList.add("delivery-time");
-      const deliveryLabel = `${day.value.toUpperCase()} ( ${
-        deliveryPreference.start_time
-      } - ${deliveryPreference.end_time} )`;
-      newDeliveryTime.innerHTML = `
-        <label class="custom-radio">
-            <input type="radio" name="delivery_time" data-day="${day.value.toUpperCase()}" data-start_time="${
-        deliveryPreference.start_time
-      }" data-end_time="${deliveryPreference.end_time}"  />
-            <span class="radio-custom"></span>
-            <span>${deliveryLabel}</span>
-        </label>
-    `;
-      delivery_times_container.appendChild(newDeliveryTime);
-
-      document.getElementById("delivery_day").value = "";
-      document.getElementById("delivery_start_time").value = "";
-      document.getElementById("delivery_end_time").value = "";
-      add_new_time_form.style.display = "none";
-      add_new_time_tagline.style.display = "block";
-
-      attachRadioButtonListeners();
-    }
-  });
-
-  function attachRadioButtonListeners() {
-    const delivery_times_radio_buttons = document.querySelectorAll(
-      'input[name="delivery_time"]'
-    );
-    delivery_times_radio_buttons.forEach((radio) => {
-      radio.addEventListener("change", () => {
-        deliveryPreferences.forEach((pref) => {
-          pref.is_primary = false;
-        });
-
-        const selectedDay = radio.getAttribute("data-day").toUpperCase();
-        const selectedStartTime = radio.getAttribute("data-start_time");
-        const selectedEndTime = radio.getAttribute("data-end_time");
-
-        const matchingIndex = Array.from(
-          delivery_times_radio_buttons
-        ).findIndex(
-          (rb) =>
-            rb.dataset.day === selectedDay &&
-            rb.dataset.start_time === selectedStartTime &&
-            rb.dataset.end_time === selectedEndTime
-        );
-
-        if (matchingIndex.length !== -1) {
-          deliveryPreferences[matchingIndex].is_primary = true;
-        }
+      deliveryTimeDiv.addEventListener("click", () => {
+        setPrimaryDelivery(index);
       });
+
+      container.appendChild(deliveryTimeDiv);
     });
   }
 
-  attachRadioButtonListeners();
+  function setPrimaryDelivery(selectedIndex) {
+    deliveryPreferences = deliveryPreferences.map((option, index) => ({
+      ...option,
+      is_primary: index === selectedIndex,
+    }));
+    renderDeliveryPreferences(deliveryPreferences);
+  }
+
+  renderDeliveryPreferences(deliveryPreferences);
 
   function debounce(func, delay) {
     let timeout;
@@ -890,7 +844,20 @@ document.addEventListener("DOMContentLoaded", () => {
   if (QCWC_loginModal_close_btn) {
     QCWC_loginModal_close_btn.addEventListener("click", function () {
       document.getElementById("QCWC_loginModal").style.display = "none";
+      document.querySelector(".login-content").style.display = "block";
+      document.querySelector(".verification-content").style.display = "none";
+      document.querySelector(".otp-content").style.display = "none";
+      document.querySelector(".register-content").style.display = "none";
       document.body.style.overflow = "auto";
+      login_account_para.style.display = "none";
+      register_account_paras.forEach(
+        (account_para) => (account_para.style.display = "block")
+      );
+      successMessage.classList.remove("active");
+      successMessageText.innerHTML = "";
+      errorMessage.classList.remove("active");
+      errorMessage.innerHTML = "";
+      stopVerificationPoling();
     });
   }
 
@@ -1103,9 +1070,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  document
-    .getElementById("confirmAddressButton")
-    .addEventListener("click", function () {
+  if (confirm_address_button) {
+    confirm_address_button.addEventListener("click", function () {
       const selectedAddress = document.querySelector(
         'input[name="user_address"]:checked'
       );
@@ -1185,10 +1151,10 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
     });
+  }
 
-  document
-    .getElementById("confirmPrefenceButton")
-    .addEventListener("click", function () {
+  if (confirm_prefence_button) {
+    confirm_prefence_button.addEventListener("click", function () {
       const selectedPrefence = document.querySelector(
         'input[name="delivery_preference"]:checked'
       );
@@ -1234,6 +1200,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
     });
+  }
 
   function savePrimaryUserDetail(email) {
     const data = {
@@ -1317,6 +1284,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function stopApiKeyCheck() {
     clearInterval(intervalId);
+  }
+
+  function stopVerificationPoling() {
+    if (intervalId) {
+      clearInterval(intervalId);
+      intervalId = null;
+      document.querySelector(".login-content").style.pointerEvents = "all";
+      document.querySelector(".login-content").style.opacity = "1";
+    }
   }
 
   document.getElementById("authenticateButton").onclick = async function () {
@@ -1566,32 +1542,34 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  quick_c_logout_btn.addEventListener("click", () => {
-    const btnLoader = quick_c_logout_btn.querySelector(".btn-loader");
-    const btnText = quick_c_logout_btn.querySelector(".btn-text");
+  if (quick_c_logout_btn) {
+    quick_c_logout_btn.addEventListener("click", () => {
+      const btnLoader = quick_c_logout_btn.querySelector(".btn-loader");
+      const btnText = quick_c_logout_btn.querySelector(".btn-text");
 
-    btnLoader.style.display = "block";
-    btnText.style.display = "none";
+      btnLoader.style.display = "block";
+      btnText.style.display = "none";
 
-    const data = {
-      action: "logout_quick_c",
-    };
+      const data = {
+        action: "logout_quick_c",
+      };
 
-    jQuery.ajax({
-      url: ajaxurl,
-      data: data,
-      type: "POST",
-      success: function (response) {
-        window.location.reload(true);
-        btnLoader.style.display = "none";
-        btnText.style.display = "block";
-        closeAddressesModal();
-      },
-      error: function () {
-        alert("There was an error with the request.");
-        btnLoader.style.display = "none";
-        btnText.style.display = "block";
-      },
+      jQuery.ajax({
+        url: ajaxurl,
+        data: data,
+        type: "POST",
+        success: function (response) {
+          window.location.reload(true);
+          btnLoader.style.display = "none";
+          btnText.style.display = "block";
+          closeAddressesModal();
+        },
+        error: function () {
+          alert("There was an error with the request.");
+          btnLoader.style.display = "none";
+          btnText.style.display = "block";
+        },
+      });
     });
-  });
+  }
 });

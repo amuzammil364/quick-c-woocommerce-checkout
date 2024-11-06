@@ -39,6 +39,12 @@ function QCWC_includes_resources()
     //plugin scripts
     wp_enqueue_script('QCWC-script', plugins_url('assets/js/script.js', __FILE__), array(), '1.1.0', true);
 
+    wp_localize_script('QCWC-script', 'MyPlugin', array(
+        'sunIconUrl' => plugins_url('assets/images/sun.png', __FILE__),
+        'midNightIconUrl' => plugins_url('assets/images/mid-night.png', __FILE__),
+        'afterNoonIconUrl' => plugins_url('assets/images/afternoon.png', __FILE__),
+        'eveningIconUrl' => plugins_url('assets/images/evening.png', __FILE__)
+    ));
 
     wp_localize_script('QCWC-script', 'ajaxurl', admin_url('admin-ajax.php'));
 }
@@ -288,7 +294,7 @@ function remove_auth_token_from_session()
 // Check is User Logged in and is Checkout so script pass token and user email
 function QCWC_custom_checkout_popup()
 {
-    if (is_checkout() || is_cart()) {
+    if (is_checkout() || is_cart() || has_shortcode(get_post()->post_content, 'qcwc_checkout_module')) {
         $user_id = get_current_user_id();
         if ($user_id) {
             $user_token = get_user_meta($user_id, 'quick-c-user-api-key', true);
@@ -317,6 +323,23 @@ function add_custom_button_checkout()
     }
 }
 add_action('woocommerce_before_checkout_billing_form', 'add_custom_button_checkout', 10);
+
+add_action('template_redirect', 'redirect_if_no_token_on_checkout');
+
+function redirect_if_no_token_on_checkout()
+{
+    if (is_checkout() && isset($_GET['quick-c-checkout']) && $_GET['quick-c-checkout'] === 'true') {
+        $user_id = get_current_user_id();
+
+        $user_token = get_user_meta($user_id, 'quick-c-user-api-key', true);
+
+        if (empty($user_token)) {
+            wp_redirect(wc_get_cart_url());
+            exit;
+        }
+    }
+}
+
 
 
 function custom_billing_fields($checkout)
@@ -461,6 +484,8 @@ function qcwc_add_custom_cart_button()
     <?php
 }
 
+add_shortcode("qcwc_checkout_module", "qcwc_add_custom_cart_button");
+
 function display_delivery_preferences_checkout($checkout)
 {
     if (is_user_logged_in() && (isset($_GET['quick-c-checkout']) && $_GET['quick-c-checkout'] === 'true')) {
@@ -495,7 +520,7 @@ add_action('woocommerce_before_order_notes', 'display_delivery_preferences_check
 // Add Authentication and Verify OTP Modal
 function QCWC_custom_popup_html()
 {
-    if (is_checkout() || is_cart()) {
+    if (is_checkout() || is_cart() || has_shortcode(get_post()->post_content, 'qcwc_checkout_module')) {
         ?>
         <div id="QCWC_loginModal" class="QCWC_loginModal" style="display: none;">
             <div class="QCWC_modal-content">
@@ -592,40 +617,6 @@ function QCWC_custom_popup_html()
                         </div>
                         <div class="register-tab-content" id="delivery-time-detail">
                             <div class="delivery-times">
-                                <div class="delivery-time">
-                                    <label class="custom-radio">
-                                        <input type="radio" name="delivery_time" data-day="MORNING" data-start_time="09:00:00" data-end_time="10:00:00" checked />
-                                        <span class="radio-custom"></span>
-                                        <span>MORNING ( 09:00:00 - 10:00:00 )</span>
-                                </div>
-                            </div>
-                            <p class="add-new-delivery-time-tagline">+ Add New Time</p>
-                            <div class="add-new-delivery-time-form">
-                                <div class="QCWC_delivery-time-form-groups">
-                                    <div class="QCWC_form-group">
-                                        <label for="#delivery_day">Day</label>
-                                        <select id="delivery_day">
-                                            <option value="">Select Day</option>
-                                            <option value="Morning">Morning</option>
-                                            <option value="Afternoon">Afternoon</option>
-                                            <option value="Evening">Evening</option>
-                                            <option value="Night">Night</option>
-                                            <option value="Midnight">Midnight</option>
-                                        </select>
-                                    </div>
-                                    <div class="QCWC_form-group">
-                                        <label for="#delivery_start_time">Start Time</label>
-                                        <input type="time" id="delivery_start_time" placeholder="">
-                                    </div>
-                                    <div class="QCWC_form-group">
-                                        <label for="#delivery_end_time">End Time</label>
-                                        <input type="time" id="delivery_end_time" placeholder="">
-                                    </div>
-                                </div>
-                                <div class="btns">
-                                    <button id="cancel_delivery_time" type="button"><span class="btn-text">Cancel Time</span></button>
-                                    <button id="add_delivery_time" type="button"><span class="btn-text">Add Time</span></button>
-                                </div>
                             </div>
                         </div>
                     </div>
